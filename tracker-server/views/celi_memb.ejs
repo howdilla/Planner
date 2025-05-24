@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner - Цели</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            background: linear-gradient(to bottom, #3A3F58, #6F637E);
+        }
+        .widget {
+            background-color: #6F637E;
+            border-radius: 10px;
+        }
+        .task-counter {
+            background-color: #3A3F58;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .divider {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .breadcrumb-link {
+            color: #DCD1E9;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .breadcrumb-link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        .goal-card {
+            transition: all 0.3s ease;
+        }
+        .goal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: absolute;
+                z-index: 50;
+                height: 100vh;
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#3A3F58] font-sans text-white">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="sidebar w-80 h-screen fixed md:relative">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold mb-6">Planner</h1>
+
+                <!-- Search -->
+                <div class="relative mb-8">
+                    <input type="text" placeholder="Поиск..." class="w-full pl-10 pr-4 py-2 bg-[#4A4F6A] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+
+                <!-- Main Menu -->
+                <nav class="mb-8">
+                    <ul class="space-y-2">
+                        <li><a href="/mem_tasks" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-tasks"></i><span>Задачи</span></a></li>
+                        <li><a href="/port_memb" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-project-diagram"></i><span>Проекты и портфели</span></a></li>
+                        <li><a href="/queue/member" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-stream"></i><span>Очередь</span></a></li>
+                        <li><a href="/goals" class="flex items-center space-x-3 p-3 rounded-lg bg-[#4A4F6A]"><i class="fas fa-bullseye"></i><span>Цели</span></a></li>
+                        <li><a href="/boards" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-columns"></i><span>Доски задач</span></a></li>
+                        <li><a href="/reports" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-chart-bar"></i><span>Отчеты</span></a></li>
+                        <li><a href="/more" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-ellipsis-h"></i><span>Еще</span></a></li>
+                    </ul>
+                </nav>
+
+                <div class="divider"></div>
+
+                <!-- Team Section -->
+                <div class="mb-8">
+                    <a href="/team" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left">
+    <i class="fas fa-users"></i><span>Команда</span>
+</a>
+                    
+                </div>
+
+                <!-- Bottom Menu -->
+                <div class="absolute bottom-0 left-0 right-0 p-4">
+                    <ul class="space-y-2">
+                        <li><a href="/notifications" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bell"></i><span>Уведомления</span></a></li>
+                        <li><a href="/support" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-question-circle"></i><span>Поддержка</span></a></li>
+                        <li><a href="/settings" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-cog"></i><span>Настройки</span></a></li>
+                        <li><a href="/user" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-user-circle"></i><span class="text-lg">Учетная запись</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-0 md:ml-80">
+            <!-- Top Bar -->
+            <div class="bg-[#4A4F6A] p-4 flex justify-between items-center">
+                <h2 id="breadcrumb" class="text-xl">
+                    <a href="/" class="breadcrumb-link">Моя страница</a> / <span id="current-section">Цели</span>
+                </h2>
+                <a href="/user" class="px-4 py-2 bg-[#6F637E] rounded-lg hover:bg-[#5E536D] inline-block">
+    <i class="fas fa-pencil-alt mr-2"></i>
+    Редактировать
+</a>
+            </div>
+            
+
+            <!-- Goals Section -->
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold">Мои цели</h1>
+                    <div class="flex space-x-3">
+                        <button onclick="openCreateGoalModal()" class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Добавить цель
+                        </button>
+                        <button onclick="openEditGoalModal()" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center">
+                            <i class="fas fa-edit mr-2"></i> Редактировать цель
+                        </button>
+                        <button onclick="deleteSelectedGoal()" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700 flex items-center">
+                            <i class="fas fa-trash mr-2"></i> Удалить цель
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Goals List -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="goalsContainer">
+                    <!-- Goals will be added here dynamically -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Goal Modal -->
+    <div id="createGoalModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#4A4F6A] rounded-lg p-6 w-full max-w-md relative">
+            <button onclick="closeCreateGoalModal()" class="absolute top-2 right-2 text-gray-300 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-xl font-semibold mb-4">Создать цель</h3>
+            <form id="createGoalForm">
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Название цели</label>
+                    <input type="text" id="goalTitle" class="w-full p-2 bg-[#3A3F58] border border-[#6F637E] rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-300 mb-2">Дата начала</label>
+                        <input type="date" id="goalStartDate" class="w-full p-2 bg-[#3A3F58] border border-[#6F637E] rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 mb-2">Дата завершения</label>
+                        <input type="date" id="goalEndDate" class="w-full p-2 bg-[#3A3F58] border border-[#6F637E] rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Дедлайн (в днях)</label>
+                    <input type="number" id="goalDeadline" class="w-full p-2 bg-[#3A3F58] border border-[#6F637E] rounded focus:outline-none focus:ring-2 focus:ring-purple-500" min="1" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Прогресс</label>
+                    <div class="flex items-center">
+                        <input type="range" id="goalProgress" min="0" max="100" value="0" class="w-full mr-4" oninput="updateProgressValue(this.value)">
+                        <span id="progressValue" class="text-white font-bold">0%</span>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Прикрепить файлы</label>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="goalFiles" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#6F637E] rounded-lg cursor-pointer bg-[#3A3F58] hover:bg-[#5E536D]">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="fas fa-cloud-upload-alt text-2xl text-gray-300 mb-2"></i>
+                                <p class="text-sm text-gray-300">Перетащите файлы сюда или кликните для выбора</p>
+                            </div>
+                            <input id="goalFiles" type="file" class="hidden" multiple>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeCreateGoalModal()" class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700">Создать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Goal Modal -->
+    <div id="editGoalModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#4A4F6A] rounded-lg p-6 w-full max-w-md relative">
+            <button onclick="closeEditGoalModal()" class="absolute top-2 right-2 text-gray-300 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-xl font-semibold mb-4">Редактировать цель</h3>
+            <form id="editGoalForm">
+                <input type="hidden" id="editGoalId">
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Название цели</label>
+                    <input type="text" id="editGoalTitle" class="w-full p-2 bg-[#3A3F58] border border-[#6F637E] rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-300 mb-2">Дата начала</label>
+                        <input type="date" id="editGoalStartDate" class="w-full p-2 bg-[#3A3F58] border border-[#6F637E] rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 mb-2">Дата завершения</label>
+                        <input type="date" id="editGoalEndDate" class="w-full p-2 bg-[#3A3F58] border border-[#6F637E] rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Дедлайн (в днях)</label>
+                    <input type="number" id="editGoalDeadline" class="w-full p-2 bg-[#3A3F58] border border-[#6F637E] rounded focus:outline-none focus:ring-2 focus:ring-purple-500" min="1" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Прогресс</label>
+                    <div class="flex items-center">
+                        <input type="range" id="editGoalProgress" min="0" max="100" value="0" class="w-full mr-4" oninput="updateEditProgressValue(this.value)">
+                        <span id="editProgressValue" class="text-white font-bold">0%</span>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Прикрепленные файлы</label>
+                    <div id="editFilesContainer" class="mb-2">
+                        <!-- Files will be listed here -->
+                    </div>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="editGoalFiles" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#6F637E] rounded-lg cursor-pointer bg-[#3A3F58] hover:bg-[#5E536D]">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="fas fa-cloud-upload-alt text-2xl text-gray-300 mb-2"></i>
+                                <p class="text-sm text-gray-300">Добавить новые файлы</p>
+                            </div>
+                            <input id="editGoalFiles" type="file" class="hidden" multiple>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeEditGoalModal()" class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invite Modal (from original code) -->
+    <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white text-black rounded-lg p-6 w-80 relative">
+            <button onclick="closeInviteModal()" class="absolute top-2 right-2 text-gray-600 hover:text-black">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-xl font-semibold mb-4">Пригласить пользователя</h3>
+            <input type="email" id="inviteEmail" placeholder="Введите email" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            <button onclick="sendInvite()" class="w-full bg-[#735B92] text-white p-2 rounded hover:bg-[#5f4a78]">
+                Отправить приглашение
+            </button>
+        </div>
+    </div>
+
+    <script>
+    let selectedGoalId = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchGoals();
+
+        // Mobile sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function () {
+            document.querySelector('.sidebar').classList.toggle('open');
+        });
+
+        // Create goal
+        document.getElementById('createGoalForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            createGoal();
+        });
+
+        // Edit goal
+        document.getElementById('editGoalForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            updateGoal();
+        });
+    });
+
+     function changeSection(section) {
+            if (section === 'home') {
+                window.location.href = '/';
+                return;
+            }
+
+            currentSection = section;
+            document.getElementById('breadcrumb').innerHTML = `
+                <a href="/" class="breadcrumb-link">Моя страница</a> / ${getSectionName(section)}
+            `;
+
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+
+    async function fetchGoals() {
+        try {
+            const response = await fetch('/api/goals');
+            const goals = await response.json();
+            renderGoals(goals);
+        } catch (error) {
+            console.error('Ошибка при загрузке целей:', error);
+        }
+    }
+
+    function renderGoals(goals) {
+        const container = document.getElementById('goalsContainer');
+        container.innerHTML = '';
+
+        if (goals.length === 0) {
+            container.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-10">У вас пока нет целей. Нажмите "Добавить цель", чтобы создать первую.</p>';
+            return;
+        }
+
+        goals.forEach(goal => {
+            const goalCard = document.createElement('div');
+            goalCard.className = 'goal-card bg-[#6F637E] rounded-lg p-4 cursor-pointer';
+            goalCard.dataset.id = goal.id;
+            goalCard.onclick = () => selectGoal(goalCard);
+
+            const radius = 30;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (goal.progress / 100) * circumference;
+            const progressColor = goal.progress < 30 ? '#EF4444' : (goal.progress < 70 ? '#F59E0B' : '#10B981');
+
+            goalCard.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="text-lg font-semibold truncate">${goal.title}</h3>
+                    <div class="relative w-16 h-16">
+                        <svg class="w-16 h-16">
+                            <circle
+                                class="progress-ring__circle"
+                                stroke="${progressColor}"
+                                stroke-width="6"
+                                stroke-linecap="round"
+                                fill="transparent"
+                                r="${radius}"
+                                cx="32"
+                                cy="32"
+                                stroke-dasharray="${circumference}"
+                                stroke-dashoffset="${offset}"
+                            />
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-white font-bold">${goal.progress}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-300 mb-2">
+                    <div class="flex items-center mb-1">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        <span>${formatDate(goal.start_date)} - ${formatDate(goal.end_date)}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Дедлайн: ${goal.deadline} дней</span>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center text-sm">
+                    <i class="fas fa-paperclip mr-2"></i>
+                    <span>${goal.files?.length || 0} файл(ов)</span>
+                </div>
+            `;
+            container.appendChild(goalCard);
+        });
+    }
+
+    function formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function selectGoal(element) {
+        document.querySelectorAll('.goal-card').forEach(card => card.classList.remove('ring-2', 'ring-purple-500'));
+        element.classList.add('ring-2', 'ring-purple-500');
+        selectedGoalId = parseInt(element.dataset.id);
+    }
+
+    function openCreateGoalModal() {
+        document.getElementById('createGoalModal').classList.remove('hidden');
+        document.getElementById('goalTitle').focus();
+    }
+
+    function closeCreateGoalModal() {
+        document.getElementById('createGoalModal').classList.add('hidden');
+        document.getElementById('createGoalForm').reset();
+        document.getElementById('progressValue').textContent = '0%';
+    }
+
+    function updateProgressValue(value) {
+        document.getElementById('progressValue').textContent = `${value}%`;
+    }
+
+    function updateEditProgressValue(value) {
+        document.getElementById('editProgressValue').textContent = `${value}%`;
+    }
+
+    async function createGoal() {
+        const data = {
+            title: document.getElementById('goalTitle').value,
+            start_date: document.getElementById('goalStartDate').value,
+            end_date: document.getElementById('goalEndDate').value,
+            deadline: parseInt(document.getElementById('goalDeadline').value),
+            progress: parseInt(document.getElementById('goalProgress').value),
+            files: [] // Можно реализовать загрузку файлов отдельно
+        };
+
+        try {
+            const response = await fetch('/api/goals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                closeCreateGoalModal();
+                fetchGoals();
+            }
+        } catch (error) {
+            console.error('Ошибка при создании цели:', error);
+        }
+    }
+
+    async function openEditGoalModal() {
+        if (!selectedGoalId) return alert('Выберите цель для редактирования');
+
+        try {
+            const response = await fetch('/api/goals');
+            const goals = await response.json();
+            const goal = goals.find(g => g.id === selectedGoalId);
+            if (!goal) return;
+
+            document.getElementById('editGoalId').value = goal.id;
+            document.getElementById('editGoalTitle').value = goal.title;
+            document.getElementById('editGoalStartDate').value = goal.start_date;
+            document.getElementById('editGoalEndDate').value = goal.end_date;
+            document.getElementById('editGoalDeadline').value = goal.deadline;
+            document.getElementById('editGoalProgress').value = goal.progress;
+            document.getElementById('editProgressValue').textContent = `${goal.progress}%`;
+
+            document.getElementById('editFilesContainer').innerHTML = ''; // Можно реализовать отображение файлов
+            document.getElementById('editGoalModal').classList.remove('hidden');
+        } catch (error) {
+            console.error('Ошибка при получении цели:', error);
+        }
+    }
+
+    function closeEditGoalModal() {
+        document.getElementById('editGoalModal').classList.add('hidden');
+    }
+
+    async function updateGoal() {
+        const id = document.getElementById('editGoalId').value;
+        const data = {
+            title: document.getElementById('editGoalTitle').value,
+            start_date: document.getElementById('editGoalStartDate').value,
+            end_date: document.getElementById('editGoalEndDate').value,
+            deadline: parseInt(document.getElementById('editGoalDeadline').value),
+            progress: parseInt(document.getElementById('editGoalProgress').value),
+            files: []
+        };
+
+        try {
+            const res = await fetch(`/api/goals/update/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                closeEditGoalModal();
+                fetchGoals();
+            }
+        } catch (err) {
+            console.error('Ошибка при обновлении цели:', err);
+        }
+    }
+
+    async function deleteSelectedGoal() {
+        if (!selectedGoalId) return alert('Выберите цель для удаления');
+        if (!confirm('Удалить цель?')) return;
+
+        try {
+            const res = await fetch(`/api/goals/delete/${selectedGoalId}`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                selectedGoalId = null;
+                fetchGoals();
+            }
+        } catch (err) {
+            console.error('Ошибка при удалении цели:', err);
+        }
+    }
+
+    function openInviteModal() {
+        document.getElementById('inviteModal').classList.remove('hidden');
+    }
+
+    function closeInviteModal() {
+        document.getElementById('inviteModal').classList.add('hidden');
+    }
+
+    async function sendInvite() {
+        const email = document.getElementById('inviteEmail').value.trim();
+        if (!email) return alert('Введите email');
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Заглушка
+            alert(`Приглашение отправлено на ${email}`);
+            document.getElementById('inviteEmail').value = '';
+            closeInviteModal();
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка при отправке приглашения');
+        }
+    }
+</script>
+
+</body>
+</html>

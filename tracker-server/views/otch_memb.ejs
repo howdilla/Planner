@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner - Отчеты</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        .sidebar {
+            background: linear-gradient(to bottom, #3A3F58, #6F637E);
+        }
+        .widget {
+            background-color: #6F637E;
+            border-radius: 10px;
+        }
+        .task-counter {
+            background-color: #3A3F58;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .divider {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        .task-list {
+            background-color: #9B8FAA;
+            border-radius: 6px;
+            overflow: visible;
+        }
+        .task-item {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+        .task-item:nth-child(even) {
+            background-color: #A79BB6;
+        }
+        .task-item:hover {
+            background-color: #B5A9C4;
+        }
+        .task-item.selected {
+            background-color: #735B92;
+        }
+        .check-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+            font-size: 18px;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        .modal-content {
+            background-color: #252538;
+            padding: 24px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .delete-btn {
+            background-color: #E74C3C;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .delete-btn:hover {
+            background-color: #C0392B;
+        }
+        .member-item {
+            background-color: #9B8FAA;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .member-item:nth-child(even) {
+            background-color: #A79BB6;
+        }
+        .member-header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .member-tasks {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .member-tasks.expanded {
+            max-height: 500px;
+        }
+        .input-field {
+            background-color: #3A3A52;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            width: 100%;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .input-field:focus {
+            outline: 1px solid #735B92;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .nav-item:hover {
+            background-color: #4A4F6A;
+        }
+        .nav-item.active {
+            background-color: #735B92;
+        }
+        .nav-item i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+        .breadcrumb-link {
+            color: #DCD1E9;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .breadcrumb-link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        .segmented-btn {
+            background-color: #3A3A52;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .segmented-btn.active {
+            background-color: #735B92;
+            color: white;
+        }
+        .action-btn {
+            background-color: #735B92;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .action-btn:hover {
+            background-color: #8a6dad;
+        }
+        
+        /* Custom styles for reports */
+        .report-card {
+            background-color: #6F637E;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .report-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #DCD1E9;
+        }
+       .chart-container {
+  height: 500px;
+  position: relative;
+  background-color: #6F637E;
+  padding: 10px;
+}
+
+.chart-container canvas {
+  width: 80%;
+  height: auto;
+  max-height: 360px;
+  display: block;
+  margin: auto;
+}
+        
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .report-table th, .report-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #9B8FAA;
+        }
+        .report-table th {
+            background-color: #735B92;
+            color: white;
+        }
+        .report-table tr:nth-child(even) {
+            background-color: #A79BB6;
+        }
+        .report-table tr:hover {
+            background-color: #B5A9C4;
+        }
+        .filter-container {
+            background-color: #6F637E;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .date-picker {
+            background-color: #9B8FAA;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            color: white;
+        }
+        .select-filter {
+            background-color: #9B8FAA;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            color: white;
+            width: 100%;
+        }
+        .export-btn {
+            background-color: #2ECC71;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .export-btn:hover {
+            background-color: #27AE60;
+        }
+        .stat-card {
+            background-color: #6F637E;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: #DCD1E9;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #3A3A52;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #2ECC71;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body class="bg-[#3A3F58] font-sans text-white">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="hidden">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold mb-6">Planner</h1>
+
+                <!-- Search -->
+                <div class="relative mb-8">
+                    <input type="text" placeholder="Поиск..." class="w-full pl-10 pr-4 py-2 bg-[#4A4F6A] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+
+                <!-- Main Menu -->
+                <nav class="mb-8">
+                    <ul class="space-y-2">
+                        <li><a href="/mem_tasks" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-tasks"></i><span>Задачи</span></a></li>
+                        <li><a href="/port_memb" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-project-diagram"></i><span>Проекты и портфели</span></a></li>
+                        <li><a href="/queue/member" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-stream"></i><span>Очередь</span></a></li>
+                        <li><a href="/goals" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bullseye"></i><span>Цели</span></a></li>
+                        <li><a href="/boards" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-columns"></i><span>Доски задач</span></a></li>
+                        <li><a href="/reports" class="flex items-center space-x-3 p-3 rounded-lg bg-[#735B92] hover:bg-[#735B92]"><i class="fas fa-chart-bar"></i><span>Отчеты</span></a></li>
+                        <li><a href="/more" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-ellipsis-h"></i><span>Еще</span></a></li>
+                    </ul>
+                </nav>
+
+                <div class="divider"></div>
+
+                <!-- Team Section -->
+                <div class="mb-8">
+                    <a href="/team" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left">
+                        <i class="fas fa-users"></i><span>Команда</span>
+                    </a>
+                    
+                </div>
+
+                <!-- Bottom Menu -->
+                <div class="absolute bottom-0 left-0 right-0 p-4">
+                    <ul class="space-y-2">
+                        <li><a href="/notifications" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bell"></i><span>Уведомления</span></a></li>
+                        <li><a href="/support" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-question-circle"></i><span>Поддержка</span></a></li>
+                        <li><a href="/settings" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-cog"></i><span>Настройки</span></a></li>
+                        <li><a href="/user" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-user-circle"></i><span class="text-lg">Учетная запись</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="w-full ml-0">
+            <!-- Top Bar -->
+            <div class="bg-[#4A4F6A] p-4 flex justify-between items-center">
+                <h2 id="breadcrumb" class="text-xl">
+                    <a href="/" class="breadcrumb-link">Моя страница</a> / <span id="current-section">Отчеты</span>
+                </h2>
+                <a href="/user" class="px-4 py-2 bg-[#6F637E] rounded-lg hover:bg-[#5E536D] inline-block">
+                    <i class="fas fa-pencil-alt mr-2"></i>
+                    Редактировать
+                </a>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reports-section" class="p-6">
+                <h1 class="text-3xl font-bold mb-2">Отчеты</h1>
+                <p class="text-xl text-gray-300 mb-8">Аналитика и статистика по вашим задачам и проектам</p>
+
+                <!-- Report Type Selector -->
+                <div class="flex items-center mb-8">
+                    <div class="flex rounded-md overflow-hidden mr-4" id="report-type-tabs">
+                        <button class="segmented-btn active" onclick="changeReportType('summary', this)">Общая статистика</button>
+                        
+                    </div>
+                </div>
+
+                <div class="stats-section">
+                  <!-- Date Range Filter -->
+                <div class="filter-container mb-8">
+                    <h3 class="text-lg font-semibold mb-4">Период отчета</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block mb-2">Начальная дата</label>
+                            <input type="date" id="start-date" class="date-picker w-full">
+                        </div>
+                        <div>
+                            <label class="block mb-2">Конечная дата</label>
+                            <input type="date" id="end-date" class="date-picker w-full">
+                        </div>
+                        <div>
+                            <label class="block mb-2">Тип задачи</label>
+                            <select id="task-type-filter" class="select-filter">
+                                <option value="all">Все типы</option>
+                                <option value="task">Задача</option>
+                                <option value="bug">Ошибка</option>
+                                <option value="feature">Новая функция</option>
+                                <option value="improvement">Улучшение</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block mb-2">Статус</label>
+                            <select id="status-filter" class="select-filter">
+                                <option value="all">Все статусы</option>
+                                <option value="planned">Запланировано</option>
+                                <option value="in-progress">В процессе</option>
+                                <option value="review">На проверке</option>
+                                <option value="completed">Завершено</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-4">
+                        <button class="action-btn mr-2" onclick="applyFilters()">
+                            Применить фильтры
+                        </button>
+                        <button class="export-btn" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel mr-2"></i>Экспорт в Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Report (default view) -->
+                <div id="summary-report" class="report-content">
+                    <h2 class="text-2xl font-bold mb-6">Общая статистика</h2>
+                    
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-value" id="total-tasks">0</div>
+                            <div class="stat-label">Всего задач</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-value" id="completed-tasks">0</div>
+                            <div class="stat-label">Завершено</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-value" id="avg-completion">0</div>
+                            <div class="stat-label">Среднее время (дни)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-project-diagram"></i>
+                            </div>
+                            <div class="stat-value" id="active-projects">0</div>
+                            <div class="stat-label">Активных проектов</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="chart-container">
+            <h3 class="chart-title">Распределение задач по статусам</h3>
+            <canvas id="status-chart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3 class="chart-title">Задачи по приоритетам</h3>
+            <canvas id="priority-chart"></canvas>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="chart-container">
+            <h3 class="chart-title">Продуктивность по дням</h3>
+            <canvas id="productivity-chart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3 class="chart-title">Распределение по проектам</h3>
+            <canvas id="project-chart"></canvas>
+        </div>
+    </div>
+
+                    <!-- Recent Tasks -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Последние задачи</h3>
+                        <div class="overflow-x-auto">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Название</th>
+                                        <th>Проект</th>
+                                        <th>Статус</th>
+                                        <th>Приоритет</th>
+                                        <th>Срок</th>
+                                        <th>Затраченное время</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-tasks">
+                                    <!-- Will be filled dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks Report -->
+                <div id="tasks-report" class="report-content hidden">
+                    <h2 class="text-2xl font-bold mb-6">Отчет по задачам</h2>
+                    
+                    <!-- Task Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-value" id="tasks-total">42</div>
+                            <div class="stat-label">Всего задач</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-value" id="tasks-completed">28</div>
+                            <div class="stat-label">Завершено</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-value" id="tasks-avg-time">3.5</div>
+                            <div class="stat-label">Среднее время (дни)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-value" id="tasks-overdue">5</div>
+                            <div class="stat-label">Просрочено</div>
+                        </div>
+                    </div>
+
+                    <!-- Task Charts -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="chart-container" style="height: 350px;"> <!-- Уменьшено с 450px -->
+                             <h3 class="chart-title">Распределение задач по статусам</h3>
+                                <canvas id="status-chart"></canvas>
+                        </div>
+                        <div class="chart-container" style="height: 450px; width: 100%;">
+                            <h3 class="text-lg font-semibold mb-4">Распределение задач по приоритетам</h3>
+                            <canvas id="tasks-priority-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6 mb-8">
+                       <div class="chart-container" style="height: 450px; width: 100%;">
+                            <h3 class="text-lg font-semibold mb-4">Продуктивность выполнения задач по дням</h3>
+                            <canvas id="tasks-productivity-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Overdue Tasks -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Просроченные задачи</h3>
+                        <div class="overflow-x-auto">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Название</th>
+                                        <th>Проект</th>
+                                        <th>Приоритет</th>
+                                        <th>Срок</th>
+                                        <th>Дней просрочки</th>
+                                        <th>Ответственный</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Разработка API для интеграции</td>
+                                        <td>Интернет-магазин</td>
+                                        <td>Высокий</td>
+                                        <td>2023-05-20</td>
+                                        <td>12</td>
+                                        <td>Иван Иванов</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Тестирование платежной системы</td>
+                                        <td>Интернет-магазин</td>
+                                        <td>Средний</td>
+                                        <td>2023-06-01</td>
+                                        <td>5</td>
+                                        <td>Сергей Сергеев</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Обновление документации</td>
+                                        <td>Мобильное приложение</td>
+                                        <td>Низкий</td>
+                                        <td>2023-06-10</td>
+                                        <td>5</td>
+                                        <td>Анна Аннова</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Рефакторинг кода</td>
+                                        <td>CRM система</td>
+                                        <td>Средний</td>
+                                        <td>2023-06-15</td>
+                                        <td>3</td>
+                                        <td>Петр Петров</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Оптимизация базы данных</td>
+                                        <td>CRM система</td>
+                                        <td>Высокий</td>
+                                        <td>2023-06-18</td>
+                                        <td>1</td>
+                                        <td>Иван Иванов</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Report -->
+                <div id="projects-report" class="report-content hidden">
+                    <h2 class="text-2xl font-bold mb-6">Отчет по проектам</h2>
+                    
+                    <!-- Project Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-project-diagram"></i>
+                            </div>
+                            <div class="stat-value" id="projects-total">6</div>
+                            <div class="stat-label">Всего проектов</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                            <div class="stat-value" id="projects-active">4</div>
+                            <div class="stat-label">Активные</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-value" id="projects-completed">1</div>
+                            <div class="stat-label">Завершено</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-pause"></i>
+                            </div>
+                            <div class="stat-value" id="projects-paused">1</div>
+                            <div class="stat-label">На паузе</div>
+                        </div>
+                    </div>
+
+                    <!-- Project Charts -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="chart-container">
+                            <h3 class="text-lg font-semibold mb-4">Распределение проектов</h3>
+                            <canvas id="projects-distribution-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="text-lg font-semibold mb-4">Задачи по проектам</h3>
+                            <canvas id="projects-tasks-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Time Statistics -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Статистика по времени на проекты</h3>
+                        <div class="overflow-x-auto">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Проект</th>
+                                        <th>Всего задач</th>
+                                        <th>Завершено</th>
+                                        <th>Среднее время (дни)</th>
+                                        <th>Прогресс</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Веб-сайт компании</td>
+                                        <td>12</td>
+                                        <td>8</td>
+                                        <td>2.5</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 67%"></div>
+                                            </div>
+                                            <span>67%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Интернет-магазин</td>
+                                        <td>18</td>
+                                        <td>12</td>
+                                        <td>3.2</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 66%"></div>
+                                            </div>
+                                            <span>66%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Мобильное приложение</td>
+                                        <td>9</td>
+                                        <td>5</td>
+                                        <td>4.1</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 55%"></div>
+                                            </div>
+                                            <span>55%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>CRM система</td>
+                                        <td>15</td>
+                                        <td>3</td>
+                                        <td>5.7</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 20%"></div>
+                                            </div>
+                                            <span>20%</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Report -->
+                <div id="team-report" class="report-content hidden">
+                    <h2 class="text-2xl font-bold mb-6">Отчет по команде</h2>
+                    
+                    <!-- Team Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-value" id="team-members">5</div>
+                            <div class="stat-label">Участников</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-value" id="team-tasks">42</div>
+                            <div class="stat-label">Всего задач</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-value" id="team-completed">28</div>
+                            <div class="stat-label">Завершено</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="report-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-value" id="team-avg-time">3.5</div>
+                            <div class="stat-label">Среднее время (дни)</div>
+                        </div>
+                    </div>
+
+                    <!-- Team Members Table -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Участники команды</h3>
+                        <div class="overflow-x-auto">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Участник</th>
+                                        <th>Роль</th>
+                                        <th>Всего задач</th>
+                                        <th>Завершено</th>
+                                        <th>Продуктивность</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Иван Иванов</td>
+                                        <td>Разработчик</td>
+                                        <td>12</td>
+                                        <td>9</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 75%"></div>
+                                            </div>
+                                            <span>75%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Петр Петров</td>
+                                        <td>Тестировщик</td>
+                                        <td>8</td>
+                                        <td>5</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 62%"></div>
+                                            </div>
+                                            <span>62%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Сергей Сергеев</td>
+                                        <td>Разработчик</td>
+                                        <td>10</td>
+                                        <td>7</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 70%"></div>
+                                            </div>
+                                            <span>70%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Анна Аннова</td>
+                                        <td>Дизайнер</td>
+                                        <td>6</td>
+                                        <td>4</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 66%"></div>
+                                            </div>
+                                            <span>66%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Мария Михайлова</td>
+                                        <td>Менеджер</td>
+                                        <td>6</td>
+                                        <td>3</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 50%"></div>
+                                            </div>
+                                            <span>50%</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Team Chart -->
+                    <div class="chart-container mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Продуктивность команды</h3>
+                        <canvas id="team-performance-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Invite Modal -->
+    <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white text-black rounded-lg p-6 w-80 relative">
+            <button onclick="closeInviteModal()" class="absolute top-2 right-2 text-gray-600 hover:text-black">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-xl font-semibold mb-4">Пригласить пользователя</h3>
+            <input type="email" id="inviteEmail" placeholder="Введите email" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            <button onclick="sendInvite()" class="w-full bg-[#735B92] text-white p-2 rounded hover:bg-[#5f4a78]">
+                Отправить приглашение
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    const tasks = <%- JSON.stringify(tasks) %>;
+    const projects = <%- JSON.stringify(projects) %>;
+    console.log("tasks:", tasks);
+console.log("projects:", projects);
+
+    const normalizeStatus = (status) => {
+        const map = {
+            'Запланировано': 'Запланировано',
+            'В процессе': 'В процессе',
+            'На проверке': 'На проверке',
+            'completed': 'Завершено',
+            'Завершено': 'Завершено'
+        };
+        return map[status] || status;
+    };
+
+    const normalizePriority = (priority) => {
+        const map = {
+            'Высокий': 'Высокий',
+            'Средний': 'Средний',
+            'Низкий': 'Низкий'
+        };
+        return map[priority] || priority;
+    };
+
+    const normalizeProjectStatus = (status) => {
+    const map = {
+        'Запланировано': 'planned',
+        'В процессе': 'active',
+        'Завершено': 'completed',
+        // если вдруг где-то уже используется английский
+        'planned': 'planned',
+        'active': 'active',
+        'completed': 'completed'
+    };
+    return map[status] || status;
+};
+
+    function updateSummaryStats() {
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    const type = document.getElementById('task-type-filter').value;
+    const statusFilter = document.getElementById('status-filter').value;
+
+    let filtered = tasks;
+
+    if (type !== 'all') filtered = filtered.filter(t => t.type === type);
+    if (statusFilter !== 'all') filtered = filtered.filter(t => normalizeStatus(t.status) === statusFilter);
+    if (startDate) filtered = filtered.filter(t => new Date(t.startDate) >= new Date(startDate));
+    if (endDate) filtered = filtered.filter(t => new Date(t.endDate) <= new Date(endDate));
+
+    const completed = filtered.filter(t => normalizeStatus(t.status) === 'Завершено' || t.completed);
+    const avgTime = completed.length ? 
+        (completed.reduce((sum, t) => sum + (t.timeSpent || 0), 0) / completed.length).toFixed(1) : 0;
+
+    document.getElementById('total-tasks').textContent = filtered.length;
+    document.getElementById('completed-tasks').textContent = completed.length;
+    document.getElementById('avg-completion').textContent = avgTime;
+    document.getElementById('active-projects').textContent = 
+       projects.filter(p => normalizeProjectStatus(p.status) === 'active').length;
+}
+
+    function initCharts() {
+        // Status Chart
+        const statusData = {
+            'Запланировано': 0,
+            'В процессе': 0,
+            'На проверке': 0,
+            'Завершено': 0
+        };
+        
+        tasks.forEach(t => {
+            const key = normalizeStatus(t.status);
+            if (statusData.hasOwnProperty(key)) {
+                statusData[key]++;
+            }
+        });
+
+        const statusCtx = document.getElementById('status-chart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(statusData),
+                datasets: [{
+                    data: Object.values(statusData),
+                    backgroundColor: ['#2ECC71', '#F1C40F', '#E67E22', '#E74C3C'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: 'white',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            }
+        });
+
+        // Priority Chart
+        const priorityData = {
+            'Высокий': 0,
+            'Средний': 0,
+            'Низкий': 0
+        };
+        
+        tasks.forEach(t => {
+            const key = normalizePriority(t.priority);
+            if (priorityData.hasOwnProperty(key)) {
+                priorityData[key]++;
+            }
+        });
+
+        const priorityCtx = document.getElementById('priority-chart').getContext('2d');
+        new Chart(priorityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(priorityData),
+                datasets: [{
+                    label: 'Количество задач',
+                    data: Object.values(priorityData),
+                    backgroundColor: ['#E74C3C', '#F1C40F', '#2ECC71'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+   function renderRecentTasks() {
+    const container = document.getElementById('recent-tasks');
+    container.innerHTML = '';
+    
+    // Сортируем по дате завершения и берем 5 последних
+    const sorted = [...tasks]
+        .filter(t => t.endDate)
+        .sort((a, b) => new Date(b.endDate) - new Date(a.endDate))
+        .slice(0, 5);
+
+    sorted.forEach(task => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${task.name}</td>
+            <td>${task.projectName || '—'}</td>
+            <td>${normalizeStatus(task.status)}</td>
+            <td>${normalizePriority(task.priority)}</td>
+            <td>${task.endDate?.slice(0, 10)}</td>
+            <td>${task.timeSpent} ч</td>`;
+        container.appendChild(tr);
+    });
+}
+
+
+    function applyFilters() {
+        updateSummaryStats();
+        renderRecentTasks();
+        initCharts();
+        initPriorityChart();
+        initProductivityChart();
+        initProjectDistributionChart();
+        alert("Фильтры применены");
+    }
+
+    function initProductivityChart() {
+    const dayMap = {};
+    tasks.forEach(t => {
+        const d = t.endDate?.slice(0, 10);
+        if (!d) return;
+        dayMap[d] = (dayMap[d] || 0) + 1;
+    });
+
+    const sortedDates = Object.keys(dayMap).sort();
+    const values = sortedDates.map(d => dayMap[d]);
+
+    const ctx = document.getElementById('productivity-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedDates,
+            datasets: [{
+                label: 'Количество завершённых задач',
+                data: values,
+                borderColor: '#3A3F58',
+                backgroundColor: 'rgba(115, 91, 146, 0.5)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: 'white'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: 'white' }
+                },
+                y: {
+                    ticks: { color: 'white' }
+                }
+            }
+        }
+    });
+}
+
+function initProjectDistributionChart() {
+    const projectMap = {};
+    const completedTasks = tasks.filter(t => normalizeStatus(t.status) === 'Завершено');
+
+    // Сначала инициализируем все проекты
+    projects.forEach(project => {
+        projectMap[project.name] = 0;
+    });
+    projectMap['Без проекта'] = 0;
+
+    // Считаем завершенные задачи по проектам
+    completedTasks.forEach(task => {
+        const projectName = task.projectName || 'Без проекта';
+        projectMap[projectName] = (projectMap[projectName] || 0) + 1;
+    });
+
+
+     const ctx = document.getElementById('project-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(projectMap),
+            datasets: [{
+                label: 'Количество завершённых задач',
+                data: Object.values(projectMap),
+                backgroundColor: '#9B59B6',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: {
+                        color: 'white'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: 'white',
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: 'white',
+                        precision: 0
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        document.getElementById('start-date').valueAsDate = firstDay;
+        document.getElementById('end-date').valueAsDate = lastDay;
+
+        updateSummaryStats();
+        renderRecentTasks();
+        initCharts();
+        initProductivityChart();
+        initProjectDistributionChart();
+    });
+
+    // Rest of your existing functions (changeReportType, exportToExcel, etc.)
+    </script>
+
+</body>
+</html>

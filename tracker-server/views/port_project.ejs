@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            background: linear-gradient(to bottom, #3A3F58, #6F637E);
+        }
+        .widget {
+            background-color: #6F637E;
+            border-radius: 10px;
+        }
+        .task-counter {
+            background-color: #3A3F58;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .divider {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        .btn-primary {
+            background-color: #735B92;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #5f4a78;
+        }
+        .segmented-btn.active {
+            background-color: #735B92;
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: absolute;
+                z-index: 50;
+                height: 100vh;
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .check-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+            font-size: 18px;
+            margin-left: 10px;
+        }
+        .check-btn.completed {
+            color: white; 
+        }
+    </style>
+</head>
+<body class="bg-[#3A3F58] font-sans text-white">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="sidebar w-80 h-screen fixed md:relative">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold mb-6">Planner</h1>
+                
+                <!-- Search -->
+                <div class="relative mb-8">
+                    <input type="text" placeholder="Поиск..." class="w-full pl-10 pr-4 py-2 bg-[#4A4F6A] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                
+                <!-- Main Menu -->
+                <nav class="mb-8">
+                    <ul class="space-y-2">
+                        <li><a href="/tasks" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-tasks"></i><span>Задачи</span></a></li>
+                        <li><a href="/project" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-project-diagram"></i><span>Проекты и портфели</span></a></li>
+                        <li><a href="/queue/leader" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-stream"></i><span>Очередь</span></a></li>
+                        <li><a href="/goals" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bullseye"></i><span>Цели</span></a></li>
+                        <li><a href="/boards" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-columns"></i><span>Доски задач</span></a></li>
+                        <li><a href="/reports" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-chart-bar"></i><span>Отчеты</span></a></li>
+                        <li><a href="/more" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-ellipsis-h"></i><span>Еще</span></a></li>
+                    </ul>
+                </nav>
+                
+                <div class="divider"></div>
+                
+                <!-- Team Section -->
+                <div class="mb-8">
+                    <a href="/team" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left">
+    <i class="fas fa-users"></i><span>Команда</span>
+</a>
+                    <button onclick="openInviteModal()" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left mt-2">
+                        <i class="fas fa-user-plus"></i><span>Добавить пользователя</span>
+                    </button>
+                </div>
+                
+                <!-- Bottom Menu -->
+                <div class="absolute bottom-0 left-0 right-0 p-4">
+                    <ul class="space-y-2">
+                        <li><a href="/notifications" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bell"></i><span>Уведомления</span></a></li>
+                        <li><a href="/support" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-question-circle"></i><span>Поддержка</span></a></li>
+                        <li><a href="/settings" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-cog"></i><span>Настройки</span></a></li>
+                        <li><a href="/user" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-user-circle"></i><span class="text-lg">Учетная запись</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+       <main class="flex-1 ml-0 md:ml-80">
+        <!-- Top Bar -->
+        <div class="bg-[#4A4F6A] p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button id="sidebarToggle" class="md:hidden p-2 text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="/home" class="text-xl font-semibold hover:underline">Моя страница</a><span class="text-xl font-semibold"> / Портфели и проекты</span>
+            </div>
+            <a href="/user" class="px-4 py-2 bg-[#6F637E] rounded-lg hover:bg-[#5E536D] inline-block">
+                <i class="fas fa-pencil-alt mr-2"></i>
+                Редактировать
+            </a>
+        </div>
+            
+            <!-- Content Section -->
+            <div class="p-6">
+            <h1 class="text-2xl font-bold mb-2">Мои портфели и проекты</h1>
+            
+            <!-- Segmented Control and Buttons -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex space-x-2">
+                    <button id="currentBtn" class="segmented-btn active px-4 py-2 rounded-l-lg" onclick="toggleSegmented('current')">Текущие</button>
+                    <button id="completedBtn" class="segmented-btn px-4 py-2 rounded-r-lg" onclick="toggleSegmented('completed')">Завершенные</button>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button onclick="openAddPortfolioModal()" class="btn-primary px-4 py-2 rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>Добавить портфель
+                    </button>
+                    <button onclick="openAddProjectModal()" class="btn-primary px-4 py-2 rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>Создать проект
+                    </button>
+                </div>
+            </div>
+                <!-- Portfolio List -->
+                <div id="portfolioList" class="space-y-4"></div>
+        </div>
+    </main>
+                
+                
+    
+    <!-- Add Portfolio Modal -->
+    <div id="addPortfolioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#4A4F6A] p-6 rounded-lg w-full max-w-lg">
+            <h2 class="text-xl font-semibold mb-4">Создать портфель</h2>
+            <form id="addPortfolioForm" class="space-y-4">
+                <input name="name" placeholder="Название портфеля" class="w-full p-2 rounded bg-[#3A3F58]" required />
+                <textarea name="description" placeholder="Описание" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <input type="date" name="plannedDeadline" class="w-full p-2 rounded bg-[#3A3F58]">
+                <select name="status" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option value="">Статус</option>
+                    <option>Запланировано</option>
+                    <option>В процессе</option>
+                    <option>Завершено</option>
+                </select>
+                <input type="number" name="plannedTime" placeholder="Плановое время (дни)" class="w-full p-2 rounded bg-[#3A3F58]">
+                <input type="number" name="actualTime" placeholder="Фактическое время (дни)" class="w-full p-2 rounded bg-[#3A3F58]">
+                <textarea name="risks" placeholder="Риски" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <textarea name="features" placeholder="Особенности" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <select name="responsible" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option>Я</option>
+                    <option>Дмитрий Новиков</option>
+                </select>
+                <input type="date" name="currentDeadline" class="w-full p-2 rounded bg-[#3A3F58]">
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('addPortfolioModal')" class="bg-gray-500 px-4 py-2 rounded">Отмена</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Создать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Portfolio Modal -->
+    <div id="editPortfolioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#4A4F6A] p-6 rounded-lg w-full max-w-lg">
+            <h2 class="text-xl font-semibold mb-4">Редактировать портфель</h2>
+            <form id="editPortfolioForm" class="space-y-4">
+                <input name="name" placeholder="Название портфеля" class="w-full p-2 rounded bg-[#3A3F58]" required />
+                <textarea name="description" placeholder="Описание" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <input type="date" name="plannedDeadline" class="w-full p-2 rounded bg-[#3A3F58]">
+                <select name="status" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option value="">Статус</option>
+                    <option>Запланировано</option>
+                    <option>В процессе</option>
+                    <option>Завершено</option>
+                </select>
+                <input type="number" name="plannedTime" placeholder="Плановое время (дни)" class="w-full p-2 rounded bg-[#3A3F58]">
+                <input type="number" name="actualTime" placeholder="Фактическое время (дни)" class="w-full p-2 rounded bg-[#3A3F58]">
+                <textarea name="risks" placeholder="Риски" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <textarea name="features" placeholder="Особенности" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <select name="responsible" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option>Я</option>
+                    <option>Дмитрий Новиков</option>
+                </select>
+                <input type="date" name="currentDeadline" class="w-full p-2 rounded bg-[#3A3F58]">
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('editPortfolioModal')" class="bg-gray-500 px-4 py-2 rounded">Отмена</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Add Project Modal -->
+    <div id="addProjectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#4A4F6A] p-6 rounded-lg w-full max-w-lg">
+            <h2 class="text-xl font-semibold mb-4">Создать проект</h2>
+            <form id="addProjectForm" class="space-y-4">
+                <select id="portfolioSelect" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option value="">Выберите портфель</option>
+                </select>
+                <input name="name" placeholder="Название проекта" class="w-full p-2 rounded bg-[#3A3F58]" required>
+                <textarea name="description" placeholder="Описание" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <input type="date" name="plannedDeadline" class="w-full p-2 rounded bg-[#3A3F58]">
+                <select name="status" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option value="">Статус</option>
+                    <option>Запланировано</option>
+                    <option>В процессе</option>
+                    <option>Завершено</option>
+                </select>
+                <input type="number" name="plannedTime" placeholder="Плановое время (дни)" class="w-full p-2 rounded bg-[#3A3F58]">
+                <input type="number" name="actualTime" placeholder="Фактическое время (дни)" class="w-full p-2 rounded bg-[#3A3F58]">
+                <textarea name="risks" placeholder="Риски" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <textarea name="features" placeholder="Особенности" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <select name="responsible" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option>Я</option>
+                    <option>Дмитрий Новиков</option>
+                    <option>Анна Минаева</option>
+                </select>
+                <input type="date" name="currentDeadline" class="w-full p-2 rounded bg-[#3A3F58]">
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('addProjectModal')" class="bg-gray-500 px-4 py-2 rounded">Отмена</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Создать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Project Modal -->
+    <div id="editProjectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#4A4F6A] p-6 rounded-lg w-full max-w-lg">
+            <h2 class="text-xl font-semibold mb-4">Редактировать проект</h2>
+            <form id="editProjectForm" class="space-y-4">
+                <select id="editPortfolioSelect" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option value="">Выберите портфель</option>
+                </select>
+                <select id="projectSelect" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option value="">Выберите проект</option>
+                </select>
+                <input name="name" placeholder="Название проекта" class="w-full p-2 rounded bg-[#3A3F58]" required>
+                <textarea name="description" placeholder="Описание" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <input type="date" name="plannedDeadline" class="w-full p-2 rounded bg-[#3A3F58]">
+                <select name="status" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option value="">Статус</option>
+                    <option>Запланировано</option>
+                    <option>В процессе</option>
+                    <option>Завершено</option>
+                </select>
+                <input type="number" name="plannedTime" placeholder="Плановое время (дни)" class="w-full p-2 rounded bg-[#3A3F58]">
+                <input type="number" name="actualTime" placeholder="Фактическое время (дни)" class="w-full p-2 rounded bg-[#3A3F58]">
+                <textarea name="risks" placeholder="Риски" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <textarea name="features" placeholder="Особенности" class="w-full p-2 rounded bg-[#3A3F58]"></textarea>
+                <select name="responsible" class="w-full p-2 rounded bg-[#3A3F58]">
+                    <option>Я</option>
+                    <option>Дмитрий Новиков</option>
+                    <option>Анна Минаева</option>
+                </select>
+                <input type="date" name="currentDeadline" class="w-full p-2 rounded bg-[#3A3F58]">
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('editProjectModal')" class="bg-gray-500 px-4 py-2 rounded">Отмена</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Invite Modal -->
+    <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white text-black rounded-lg p-6 w-80 relative">
+            <button onclick="closeInviteModal()" class="absolute top-2 right-2 text-gray-600 hover:text-black">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-xl font-semibold mb-4">Пригласить пользователя</h3>
+            <input type="email" id="inviteEmail" placeholder="Введите email" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            <button onclick="sendInvite()" class="w-full bg-[#735B92] text-white p-2 rounded hover:bg-[#5f4a78]">
+                Отправить приглашение
+            </button>
+        </div>
+    </div>
+
+    
+   <script>
+        // Data
+        let portfolios = [];
+        let currentPortfolioId = null;
+        let currentProjectId = null;
+        let currentView = 'current'; // 'current' or 'completed'
+        
+        // DOM Elements
+        const portfolioList = document.getElementById('portfolioList');
+        const portfolioSelect = document.getElementById('portfolioSelect');
+        const editPortfolioSelect = document.getElementById('editPortfolioSelect');
+        const projectSelect = document.getElementById('projectSelect');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadPortfolios();
+            renderPortfolios();
+            updatePortfolioSelects();
+        });
+        
+        // Load data from server
+        async function loadPortfolios() {
+            try {
+                const response = await fetch('/api/portfolios');
+                const data = await response.json();
+                
+                if (data.success) {
+                    portfolios = data.portfolios;
+                } else {
+                    console.error('Ошибка загрузки портфелей:', data.message);
+                }
+            } catch (err) {
+                console.error('Ошибка загрузки портфелей:', err);
+            }
+        }
+        
+        // Modal Functions (остаются без изменений)
+        
+        // Form Handlers
+        document.getElementById('addPortfolioForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const form = e.target;
+            
+            try {
+                const response = await fetch('/api/portfolios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: form.name.value,
+                        description: form.description.value,
+                        plannedDeadline: form.plannedDeadline.value || null,
+                        status: form.status.value || null,
+                        plannedTime: form.plannedTime.value || null,
+                        actualTime: form.actualTime.value || null,
+                        risks: form.risks.value || null,
+                        features: form.features.value || null,
+                        responsible: form.responsible.value || null,
+                        currentDeadline: form.currentDeadline.value || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadPortfolios();
+                    renderPortfolios();
+                    updatePortfolioSelects();
+                    closeModal('addPortfolioModal');
+                } else {
+                    alert('Ошибка при создании портфеля: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Ошибка при создании портфеля:', err);
+                alert('Ошибка при создании портфеля');
+            }
+        });
+        
+        document.getElementById('editPortfolioForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const form = e.target;
+            
+            if (!currentPortfolioId) {
+                alert('Выберите портфель для редактирования');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/portfolios/${currentPortfolioId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: form.name.value,
+                        description: form.description.value,
+                        plannedDeadline: form.plannedDeadline.value || null,
+                        status: form.status.value || null,
+                        plannedTime: form.plannedTime.value || null,
+                        actualTime: form.actualTime.value || null,
+                        risks: form.risks.value || null,
+                        features: form.features.value || null,
+                        responsible: form.responsible.value || null,
+                        currentDeadline: form.currentDeadline.value || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadPortfolios();
+                    renderPortfolios();
+                    updatePortfolioSelects();
+                    closeModal('editPortfolioModal');
+                } else {
+                    alert('Ошибка при обновлении портфеля: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Ошибка при обновлении портфеля:', err);
+                alert('Ошибка при обновлении портфеля');
+            }
+        });
+        
+        document.getElementById('addProjectForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const form = e.target;
+            const portfolioId = portfolioSelect.value;
+            
+            if (!portfolioId) {
+                alert('Выберите портфель');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        portfolioId,
+                        name: form.name.value,
+                        description: form.description.value,
+                        plannedDeadline: form.plannedDeadline.value || null,
+                        status: form.status.value || null,
+                        plannedTime: form.plannedTime.value || null,
+                        actualTime: form.actualTime.value || null,
+                        risks: form.risks.value || null,
+                        features: form.features.value || null,
+                        responsible: form.responsible.value || null,
+                        currentDeadline: form.currentDeadline.value || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadPortfolios();
+                    renderPortfolios();
+                    updatePortfolioSelects();
+                    closeModal('addProjectModal');
+                } else {
+                    alert('Ошибка при создании проекта: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Ошибка при создании проекта:', err);
+                alert('Ошибка при создании проекта');
+            }
+        });
+        
+        document.getElementById('editProjectForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const form = e.target;
+            
+            if (!currentProjectId) {
+                alert('Выберите проект для редактирования');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        portfolioId: editPortfolioSelect.value,
+                        name: form.name.value,
+                        description: form.description.value,
+                        plannedDeadline: form.plannedDeadline.value || null,
+                        status: form.status.value || null,
+                        plannedTime: form.plannedTime.value || null,
+                        actualTime: form.actualTime.value || null,
+                        risks: form.risks.value || null,
+                        features: form.features.value || null,
+                        responsible: form.responsible.value || null,
+                        currentDeadline: form.currentDeadline.value || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadPortfolios();
+                    renderPortfolios();
+                    updatePortfolioSelects();
+                    closeModal('editProjectModal');
+                } else {
+                    alert('Ошибка при обновлении проекта: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Ошибка при обновлении проекта:', err);
+                alert('Ошибка при обновлении проекта');
+            }
+        });
+        
+        // Rendering
+        function renderPortfolios() {
+            portfolioList.innerHTML = '';
+            
+            portfolios.forEach(portfolio => {
+                // Skip if not matching current view
+                if (currentView === 'current' && portfolio.status === 'Завершено') return;
+                if (currentView === 'completed' && portfolio.status !== 'Завершено') return;
+                
+                const div = document.createElement('div');
+                div.className = 'bg-[#4A4F6A] p-4 rounded shadow cursor-pointer';
+                div.onclick = () => {
+                    currentPortfolioId = portfolio.id;
+                    currentProjectId = null;
+                    renderPortfolios();
+                };
+                
+                // Добавляем check button для завершения портфеля
+                const isCompleted = portfolio.status === 'Завершено';
+                const checkBtnClass = isCompleted ? 'check-btn completed' : 'check-btn';
+                const checkBtnIcon = isCompleted ? 'fa-check-circle' : 'fa-circle';
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-lg font-semibold ${currentPortfolioId === portfolio.id ? 'text-purple-300' : ''}">${portfolio.name}</h3>
+                            <p class="text-sm text-gray-300">${portfolio.description || 'Нет описания'}</p>
+                            <p class="text-sm text-blue-400">Общая стоимость: ${portfolio.total_price || 0}₽</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm">${portfolio.status || 'Без статуса'}</span>
+                            <button onclick="event.stopPropagation(); toggleProjects(${portfolio.id})" class="text-sm underline">
+                                Проекты (${portfolio.projects.length})
+                            </button>
+                             <button class="${checkBtnClass}" onclick="event.stopPropagation(); togglePortfolioCompletion(${portfolio.id})">
+                                <i class="fas ${checkBtnIcon}"></i>
+                            </button>
+                            <div class="flex space-x-2">
+                                <button onclick="event.stopPropagation(); openEditPortfolioModal(${portfolio.id})" class="text-sm text-yellow-400">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); deletePortfolio(${portfolio.id})" class="text-sm text-red-400">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="projects-${portfolio.id}" class="hidden mt-2 space-y-2">
+                        ${portfolio.projects.map(project => `
+                            <div class="bg-[#3A3F58] p-3 rounded cursor-pointer ${currentProjectId === project.id && currentPortfolioId === portfolio.id ? 'border-l-4 border-purple-500' : ''}"
+                                 onclick="event.stopPropagation(); selectProject(${portfolio.id}, ${project.id})">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <strong>${project.name}</strong>
+                                        <p class="text-sm text-gray-300">${project.description || ''}</p>
+                                        <p class="text-sm text-green-400">Стоимость: ${project.total_price || 0}₽</p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm">${project.status || 'Без статуса'}</span>
+                                        <div class="flex space-x-2">
+                                            <button onclick="event.stopPropagation(); openEditProjectModal(${portfolio.id}, ${project.id})" class="text-sm text-yellow-400">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="event.stopPropagation(); deleteProject(${project.id})" class="text-sm text-red-400">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${project.tasks && project.tasks.length > 0 ? `
+                                    <div class="mt-2">
+                                        <h4 class="text-sm font-semibold mb-1">Задачи проекта:</h4>
+                                        <div class="space-y-1">
+                                            ${project.tasks.map(task => `
+                                                <div class="bg-[#2A2F48] p-2 rounded text-sm">
+                                                    <div class="flex justify-between">
+                                                        <span>${task.name}</span>
+                                                        <span class="text-xs ${task.status === 'completed' ? 'text-green-400' : 'text-yellow-400'}">
+                                                            ${task.status || 'Нет статуса'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                        ${portfolio.projects.length === 0 ? '<p class="text-gray-400 text-sm">Нет проектов</p>' : ''}
+                    </div>
+                `;
+                
+                portfolioList.appendChild(div);
+            });
+            
+            if (portfolios.length === 0) {
+                portfolioList.innerHTML = '<p class="text-gray-400">Нет портфелей</p>';
+            }
+        }
+        
+         async function togglePortfolioCompletion(portfolioId) {
+            const portfolio = portfolios.find(p => p.id === portfolioId);
+            if (!portfolio) return;
+
+            const newStatus = portfolio.status === 'Завершено' ? 'В процессе' : 'Завершено';
+            
+            try {
+                const response = await fetch(`/api/portfolios/${portfolioId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: newStatus,
+                        // Остальные поля оставляем без изменений
+                        name: portfolio.name,
+                        description: portfolio.description,
+                        plannedDeadline: portfolio.planned_deadline,
+                        plannedTime: portfolio.planned_time,
+                        actualTime: portfolio.actual_time,
+                        risks: portfolio.risks,
+                        features: portfolio.features,
+                        responsible: portfolio.responsible,
+                        currentDeadline: portfolio.current_deadline
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadPortfolios();
+                    renderPortfolios();
+                } else {
+                    alert('Ошибка при обновлении статуса портфеля: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Ошибка при обновлении статуса портфеля:', err);
+                alert('Ошибка при обновлении статуса портфеля');
+            }
+        }
+
+        function toggleProjects(portfolioId) {
+            const div = document.getElementById(`projects-${portfolioId}`);
+            div.classList.toggle('hidden');
+        }
+        
+        function selectProject(portfolioId, projectId) {
+            currentPortfolioId = portfolioId;
+            currentProjectId = projectId;
+            renderPortfolios();
+        }
+        
+        function updatePortfolioSelects() {
+            portfolioSelect.innerHTML = '<option value="">Выберите портфель</option>';
+            editPortfolioSelect.innerHTML = '<option value="">Выберите портфель</option>';
+            
+            portfolios.forEach(portfolio => {
+                const option = document.createElement('option');
+                option.value = portfolio.id;
+                option.textContent = portfolio.name;
+                portfolioSelect.appendChild(option.cloneNode(true));
+                editPortfolioSelect.appendChild(option);
+            });
+        }
+        
+        async function openEditPortfolioModal(portfolioId) {
+            currentPortfolioId = portfolioId;
+            const portfolio = portfolios.find(p => p.id === portfolioId);
+            
+            if (!portfolio) {
+                alert('Портфель не найден');
+                return;
+            }
+            
+            const form = document.getElementById('editPortfolioForm');
+            
+            form.name.value = portfolio.name;
+            form.description.value = portfolio.description || '';
+            form.plannedDeadline.value = portfolio.planned_deadline || '';
+            form.status.value = portfolio.status || '';
+            form.plannedTime.value = portfolio.planned_time || '';
+            form.actualTime.value = portfolio.actual_time || '';
+            form.risks.value = portfolio.risks || '';
+            form.features.value = portfolio.features || '';
+            form.responsible.value = portfolio.responsible || '';
+            form.currentDeadline.value = portfolio.current_deadline || '';
+            
+            openModal('editPortfolioModal');
+        }
+        
+        async function openEditProjectModal(portfolioId, projectId) {
+            currentPortfolioId = portfolioId;
+            currentProjectId = projectId;
+            
+            const portfolio = portfolios.find(p => p.id === portfolioId);
+            if (!portfolio) {
+                alert('Портфель не найден');
+                return;
+            }
+            
+            const project = portfolio.projects.find(p => p.id === projectId);
+            if (!project) {
+                alert('Проект не найден');
+                return;
+            }
+            
+            const form = document.getElementById('editProjectForm');
+            
+            // Обновляем список портфелей
+            updatePortfolioSelects();
+            
+            // Устанавливаем выбранный портфель
+            editPortfolioSelect.value = portfolioId;
+            
+            form.name.value = project.name;
+            form.description.value = project.description || '';
+            form.plannedDeadline.value = project.planned_deadline || '';
+            form.status.value = project.status || '';
+            form.plannedTime.value = project.planned_time || '';
+            form.actualTime.value = project.actual_time || '';
+            form.risks.value = project.risks || '';
+            form.features.value = project.features || '';
+            form.responsible.value = project.responsible || '';
+            form.currentDeadline.value = project.current_deadline || '';
+            
+            openModal('editProjectModal');
+        }
+        
+        async function deletePortfolio(portfolioId) {
+            if (!confirm('Удалить этот портфель и все его проекты?')) return;
+            
+            try {
+                const response = await fetch(`/api/portfolios/${portfolioId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadPortfolios();
+                    renderPortfolios();
+                    updatePortfolioSelects();
+                    
+                    if (currentPortfolioId === portfolioId) {
+                        currentPortfolioId = null;
+                        currentProjectId = null;
+                    }
+                } else {
+                    alert('Ошибка при удалении портфеля: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Ошибка при удалении портфеля:', err);
+                alert('Ошибка при удалении портфеля');
+            }
+        }
+        
+        async function deleteProject(projectId) {
+            if (!confirm('Удалить этот проект?')) return;
+            
+            try {
+                const response = await fetch(`/api/projects/${projectId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadPortfolios();
+                    renderPortfolios();
+                    
+                    if (currentProjectId === projectId) {
+                        currentProjectId = null;
+                    }
+                } else {
+                    alert('Ошибка при удалении проекта: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Ошибка при удалении проекта:', err);
+                alert('Ошибка при удалении проекта');
+            }
+        }
+        
+        // Other Functions
+        function toggleSegmented(view) {
+            currentView = view;
+            document.getElementById('currentBtn').classList.toggle('active', view === 'current');
+            document.getElementById('completedBtn').classList.toggle('active', view === 'completed');
+            renderPortfolios();
+        }
+        function openAddPortfolioModal() {
+    document.getElementById('addPortfolioModal').classList.remove('hidden');
+}
+
+function openAddProjectModal() {
+    document.getElementById('addProjectModal').classList.remove('hidden');
+}
+
+function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+    </script>
+</body>
+</html>

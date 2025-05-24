@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner - Инструменты управления проектами</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #3A3F58;
+            color: #E2E8F0;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #6366F1, #8B5CF6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <header class="text-center mb-16">
+            <h1 class="text-5xl font-bold mb-4 gradient-text">Planner</h1>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                Комплексное решение для управления проектами и задачами с мощными инструментами аналитики и гибкими настройками
+            </p>
+        </header>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="card rounded-xl p-6">
+                <div class="feature-icon bg-indigo-500/20 text-indigo-400">
+                    <i class="fas fa-tasks text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Гибкое управление задачами</h3>
+                <ul class="space-y-2 text-gray-300">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-indigo-400 mt-1 mr-2"></i>
+                        <span>Создание задач с детальным описанием, вложениями (файлы до 100MB)</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-indigo-400 mt-1 mr-2"></i>
+                        <span>Назначение исполнителей, тегов, точных сроков с напоминаниями</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-indigo-400 mt-1 mr-2"></i>
+                        <span>Кастомные статусы (например, "Запланировано", "В процессе", "На проверке", "Завершено")</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-indigo-400 mt-1 mr-2"></i>
+                        <span>Мощные фильтры: по тегам, исполнителям, датам (диапазон), приоритетам, статусам</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-indigo-400 mt-1 mr-2"></i>
+                        <span>Полнотекстовый поиск по всем задачам проекта с подсветкой результатов</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="card rounded-xl p-6">
+                <div class="feature-icon bg-purple-500/20 text-purple-400">
+                    <i class="fas fa-project-diagram text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Организация проектов</h3>
+                <ul class="space-y-2 text-gray-300">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
+                        <span>Гибкие канбан-доски с настраиваемыми колонками ("Запланировано", "В процессе", "На проверке", "Завершено")</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
+                        <span>Очереди проектов с интеллектуальной сортировкой по цене, дате завершения, приоритету</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
+                        <span>Вложенные подпроекты с наследованием параметров</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
+                        <span>Шаблоны проектов для быстрого старта</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
+                        <span>Архивирование завершенных проектов с возможностью восстановления</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="card rounded-xl p-6">
+                <div class="feature-icon bg-blue-500/20 text-blue-400">
+                    <i class="fas fa-user-shield text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Гибкие роли и права доступа</h3>
+                <ul class="space-y-2 text-gray-300">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-400 mt-1 mr-2"></i>
+                        <span>Многоуровневая система доступа с кастомными ролями</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-400 mt-1 mr-2"></i>
+                        <span>Администратор: полный контроль над проектом, настройка прав, доступ к финансовым данным</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-400 mt-1 mr-2"></i>
+                        <span>Пользователь: просмотр, создание и редактирование своих задач, ограниченный доступ к проектам</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-400 mt-1 mr-2"></i>
+                        <span>Гостевой доступ с ограниченными правами просмотра</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-400 mt-1 mr-2"></i>
+                        <span>Детальный аудит действий пользователей</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="card rounded-xl p-6">
+                <div class="feature-icon bg-green-500/20 text-green-400">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Аналитика и отчеты</h3>
+                <ul class="space-y-2 text-gray-300">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span>Интерактивные дашборды с виджетами аналитики</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span>Диаграмма Ганта с возможностью перетаскивания задач и изменения сроков</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span>Burndown-чарты для отслеживания прогресса спринтов</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span>Cumulative Flow Diagram для визуализации распределения задач по статусам</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span>Детальные отчеты по времени с возможностью экспорта в CSV, XLSX, PDF</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Feature 5 -->
+            <div class="card rounded-xl p-6">
+                <div class="feature-icon bg-yellow-500/20 text-yellow-400">
+                    <i class="fas fa-cogs text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Гибкость и настройки</h3>
+                <ul class="space-y-2 text-gray-300">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-yellow-400 mt-1 mr-2"></i>
+                        <span>5+ вариантов представления данных: таблица, канбан-доска, список, календарь, временная шкала</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-yellow-400 mt-1 mr-2"></i>
+                        <span>Персональные фильтры с сохранением условий отбора задач</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-yellow-400 mt-1 mr-2"></i>
+                        <span>Кастомизация интерфейса: темы, расположение элементов, горячие клавиши</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-yellow-400 mt-1 mr-2"></i>
+                        <span>Интеграция с календарями (Google Calendar, Outlook)</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-yellow-400 mt-1 mr-2"></i>
+                        <span>API для разработчиков с подробной документацией</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Feature 6 -->
+            <div class="card rounded-xl p-6">
+                <div class="feature-icon bg-red-500/20 text-red-400">
+                    <i class="fas fa-clock text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Работа с временем и нагрузкой</h3>
+                <ul class="space-y-2 text-gray-300">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-red-400 mt-1 mr-2"></i>
+                        <span>Точный анализ загрузки сотрудников (количество задач, оценка времени, фактические затраты)</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-red-400 mt-1 mr-2"></i>
+                        <span>Планирование сроков с учетом рабочих дней и праздников</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-red-400 mt-1 mr-2"></i>
+                        <span>Тайм-трекер для ручного и автоматического учета времени</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-red-400 mt-1 mr-2"></i>
+                        <span>Уведомления о перегрузке сотрудников</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-red-400 mt-1 mr-2"></i>
+                        <span>График доступности команды с учетом отпусков и больничных</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Feature 7 -->
+            <div class="card rounded-xl p-6 md:col-span-2 lg:col-span-3">
+                <div class="feature-icon bg-gray-500/20 text-gray-400 mx-auto">
+                    <i class="fas fa-lock text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3 text-center">Безопасность данных</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-gray-700/30 p-4 rounded-lg">
+                        <h4 class="font-medium mb-2 text-lg flex items-center">
+                            <i class="fas fa-key mr-2 text-blue-400"></i> Шифрование
+                        </h4>
+                        <ul class="space-y-1 text-gray-300">
+                            <li>End-to-end шифрование всех данных</li>
+                            <li>Хранение файлов в зашифрованном виде</li>
+                            <li>SSL/TLS для передачи данных</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-700/30 p-4 rounded-lg">
+                        <h4 class="font-medium mb-2 text-lg flex items-center">
+                            <i class="fas fa-user-tag mr-2 text-purple-400"></i> Контроль доступа
+                        </h4>
+                        <ul class="space-y-1 text-gray-300">
+                            <li>Двухфакторная аутентификация</li>
+                            <li>Гибкая система ролей и разрешений</li>
+                            <li>IP-фильтрация для корпоративных клиентов</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-700/30 p-4 rounded-lg">
+                        <h4 class="font-medium mb-2 text-lg flex items-center">
+                            <i class="fas fa-shield-alt mr-2 text-green-400"></i> Защита данных
+                        </h4>
+                        <ul class="space-y-1 text-gray-300">
+                            <li>Регулярные автоматические бэкапы</li>
+                            <li>GDPR-совместимое хранение данных</li>
+                            <li>Сертификаты безопасности ISO 27001</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="mt-16 text-center">
+            <h2 class="text-3xl font-bold mb-6 gradient-text">Готовы оптимизировать управление проектами?</h2>
+            <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                Planner предлагает все необходимые инструменты для эффективной работы вашей команды
+            </p>
+            <div class="flex justify-center space-x-4">
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105">
+                    Начать бесплатный пробный период
+                </button>
+                <button class="bg-transparent hover:bg-gray-700/50 text-white font-medium py-3 px-8 rounded-lg border border-gray-600 transition duration-300">
+                    Запросить демонстрацию
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800/50 py-8 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h2 class="text-2xl font-bold gradient-text">Planner</h2>
+                    <p class="text-gray-400">© 2025 Все права защищены</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-linkedin text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-facebook text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

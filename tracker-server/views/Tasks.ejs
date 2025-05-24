@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            background: linear-gradient(to bottom, #3A3F58, #6F637E);
+        }
+        .widget {
+            background-color: #6F637E;
+            border-radius: 10px;
+        }
+        .task-counter {
+            background-color: #3A3F58;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .divider {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        .task-list {
+            background-color: #9B8FAA;
+            border-radius: 6px;
+            overflow: visible;
+        }
+        .task-item {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+        .task-item:nth-child(even) {
+            background-color: #A79BB6;
+        }
+        .task-item:hover {
+            background-color: #B5A9C4;
+        }
+        .task-item.selected {
+            background-color: #735B92;
+        }
+        .check-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+            font-size: 18px;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        .modal-content {
+            background-color: #252538;
+            padding: 24px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .delete-btn {
+            background-color: #E74C3C;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .delete-btn:hover {
+            background-color: #C0392B;
+        }
+        .member-item {
+            background-color: #9B8FAA;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .member-item:nth-child(even) {
+            background-color: #A79BB6;
+        }
+        .member-header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .member-tasks {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .member-tasks.expanded {
+            max-height: 500px;
+        }
+        .input-field {
+            background-color: #3A3A52;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            width: 100%;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .input-field:focus {
+            outline: 1px solid #735B92;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .nav-item:hover {
+            background-color: #4A4F6A;
+        }
+        .nav-item.active {
+            background-color: #735B92;
+        }
+        .nav-item i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+        .breadcrumb-link {
+            color: #DCD1E9;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .breadcrumb-link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        .create-task-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+            padding: 20px;
+        }
+        .create-task-content {
+            background-color: #78698B;
+            border-radius: 8px;
+            width: 800px;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            display: block;
+        }
+        .create-task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .create-task-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .create-task-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .create-task-form {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 40px;
+            min-height: 600px;
+        }
+        
+        .create-task-main {
+            flex: 1;
+            min-width: 300px;
+        }
+        .create-task-sidebar {
+            width: 280px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-input {
+            background-color: #9F93AE;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            width: 100%;
+            color: white;
+        }
+        .form-input:focus {
+            outline: 2px solid #65558F;
+        }
+        .form-select {
+            background-color: #65558F;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            width: 100%;
+            color: white;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+        .form-textarea {
+            background-color: #9F93AE;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            width: 100%;
+            color: white;
+            min-height: 100px;
+            resize: vertical;
+        }
+        .file-upload-btn {
+            background-color: #65558F;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .file-upload-btn:hover {
+            background-color: #78698B;
+        }
+        .create-task-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #9F93AE;
+        }
+        .dropdown {
+            position: relative;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background-color: #65558F;
+            border-radius: 6px;
+            width: 100%;
+            z-index: 10;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .dropdown-item {
+            padding: 10px 12px;
+            cursor: pointer;
+        }
+        .dropdown-item:hover {
+            background-color: #9F93AE;
+        }
+        .dropdown-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dropdown-toggle::after {
+            content: "";
+            display: inline-block;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid white;
+            margin-left: 8px;
+        }
+        .segmented-btn {
+            background-color: #3A3A52;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .segmented-btn.active {
+            background-color: #735B92;
+            color: white;
+        }
+        .action-btn {
+            background-color: #735B92;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .action-btn:hover {
+            background-color: #8a6dad;
+        }
+        .task-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background-color: #3A3F58;
+            padding: 10px;
+            border-radius: 5px;
+            width: 300px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .task-item:hover .task-tooltip {
+            display: block;
+        }
+        .task-tooltip p {
+            margin: 5px 0;
+        }
+        .task-tooltip strong {
+            color: #DCD1E9;
+        }
+        .multi-select-container {
+            position: relative;
+        }
+        .multi-select-selected {
+            background-color: #9F93AE;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            width: 100%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .multi-select-options {
+            position: absolute;
+            background-color: #65558F;
+            border-radius: 6px;
+            width: 100%;
+            z-index: 10;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .multi-select-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .multi-select-option:hover {
+            background-color: #9F93AE;
+        }
+        .multi-select-option input {
+            margin-right: 8px;
+        }
+        .selected-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .selected-item {
+            background-color: #735B92;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .selected-item button {
+            background: none;
+            border: none;
+            color: white;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        .time-spent {
+            font-size: 12px;
+            color: #DCD1E9;
+            margin-left: 10px;
+        }
+        .file-input {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: absolute;
+                z-index: 50;
+                height: 100vh;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#3A3F58] font-sans text-white">
+    <script>
+        // Инициализируем переменные данными из сервера
+        let tasks = <%- JSON.stringify(tasks) || '[]' %>;
+        let teamMembers = <%- JSON.stringify(teamMembers) || '[]' %>;
+        let currentUser = <%- JSON.stringify(user) %>;
+        
+        // Преобразуем даты в правильный формат
+        tasks.forEach(task => {
+    task.startDate = formatDate(task.startDate || task.start_date);
+    task.endDate = formatDate(task.endDate || task.end_date);
+    task.completionDate = formatDate(task.completionDate || task.completion_date);
+});
+
+
+        function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const localOffset = date.getTimezoneOffset() * 60000;
+    const localISO = new Date(date.getTime() - localOffset).toISOString().split('T')[0];
+    return localISO;
+}
+    </script>
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="sidebar w-80 h-screen fixed md:relative">
+  <div class="p-4">
+    <h1 class="text-2xl font-bold mb-6">Planner</h1>
+
+    <!-- Search -->
+    <div class="relative mb-8">
+      <input type="text" placeholder="Поиск..." class="w-full pl-10 pr-4 py-2 bg-[#4A4F6A] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+      <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+    </div>
+
+    <!-- Main Menu -->
+    <nav class="mb-8">
+      <ul class="space-y-2">
+        <li><a href="/tasks" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-tasks"></i><span>Задачи</span></a></li>
+        <li><a href="/project" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-project-diagram"></i><span>Проекты и портфели</span></a></li>
+        <li><a href="/queue/leader" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-stream"></i><span>Очередь</span></a></li>
+        <li><a href="/goals" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bullseye"></i><span>Цели</span></a></li>
+        <li><a href="/boards" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-columns"></i><span>Доски задач</span></a></li>
+        <li><a href="/reports" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-chart-bar"></i><span>Отчеты</span></a></li>
+        <li><a href="/more" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-ellipsis-h"></i><span>Еще</span></a></li>
+      </ul>
+    </nav>
+
+    <div class="divider"></div>
+
+    <!-- Team Section -->
+    <div class="mb-8">
+      <a href="/team" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left">
+    <i class="fas fa-users"></i><span>Команда</span>
+</a>
+      <button onclick="openInviteModal()" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left mt-2">
+        <i class="fas fa-user-plus"></i><span>Добавить пользователя</span>
+      </button>
+    </div>
+
+    <!-- Bottom Menu -->
+    <div class="absolute bottom-0 left-0 right-0 p-4">
+      <ul class="space-y-2">
+        <li><a href="/notifications" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bell"></i><span>Уведомления</span></a></li>
+        <li><a href="/support" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-question-circle"></i><span>Поддержка</span></a></li>
+        <li><a href="/settings" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-cog"></i><span>Настройки</span></a></li>
+        <li><a href="/user" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-user-circle"></i><span class="text-lg">Учетная запись</span></a></li>
+      </ul>
+    </div>
+  </div>
+</aside>
+
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-0 md:ml-64">
+            <!-- Top Bar -->
+            <div class="bg-[#4A4F6A] p-4 flex justify-between items-center">
+                <h2 id="breadcrumb" class="text-xl">
+                    <a href="/" class="breadcrumb-link">Моя страница</a> / <span id="current-section">Задачи</span>
+                </h2>
+                <a href="/user" class="px-4 py-2 bg-[#6F637E] rounded-lg hover:bg-[#5E536D] inline-block">
+    <i class="fas fa-pencil-alt mr-2"></i>
+    Редактировать
+</a>
+            </div>
+
+            <!-- Tasks Section -->
+            <div id="tasks-section" class="p-6">
+                <h1 class="text-3xl font-bold mb-2">Мои задачи</h1>
+                <p class="text-xl text-gray-300 mb-8">Управляйте своими задачами и задачами команды</p>
+
+
+                    <!-- Executor Widget -->
+                    <div class="p-6">
+        <!-- Task Widgets -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Автор -->
+            <div class="widget p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Автор</h3>
+                    <span class="task-counter"><%= counts.author %></span>
+                </div>
+                <p class="text-gray-300">
+                    <%= counts.author > 0 ? `${counts.author} задач(и) в процессе` : 'Нет текущих задач' %>
+                </p>
+            </div>
+
+            <!-- Исполнитель -->
+            <div class="widget p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Исполнитель</h3>
+                    <span class="task-counter"><%= counts.executor %></span>
+                </div>
+                <p class="text-gray-300">
+                    <%= counts.executor > 0 ? `${counts.executor} задач(и) в процессе` : 'Нет текущих задач' %>
+                </p>
+            </div>
+
+            <!-- Комментатор -->
+            <div class="widget p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Комментатор</h3>
+                    <span class="task-counter"><%= counts.commentator %></span>
+                </div>
+                <p class="text-gray-300">
+                    <%= counts.commentator > 0 ? `${counts.commentator} задач(и) в процессе` : 'Нет текущих задач' %>
+                </p>
+            </div>
+        </div>
+
+
+                <!-- My Tasks Section -->
+                <div class="mb-12">
+                    <div class="flex items-center mb-6">
+                        <div class="flex rounded-md overflow-hidden mr-4" id="my-tasks-tabs">
+                            <button class="segmented-btn active" onclick="changeTaskTab('current', this)">Текущие</button>
+                            <button class="segmented-btn" onclick="changeTaskTab('completed', this)">Завершенные</button>
+                        </div>
+
+                        <button class="action-btn ml-4" onclick="editSelectedTask()">
+                            Редактировать задачу
+                        </button>
+
+                        <button class="action-btn ml-2" onclick="showCreateTaskModal()">
+                            Создать задачу
+                        </button>
+                    </div>
+
+                    <!-- My Tasks List -->
+                    <div class="task-list mb-8">
+                        <div id="my-tasks-container">
+                            <!-- Tasks will be added here dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mb-12">
+                        <button class="delete-btn" onclick="deleteMyTask()">
+                            Удалить задачу
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Team Tasks Section -->
+                <div>
+                    <h2 class="text-2xl font-bold mb-6">Задачи команды</h2>
+
+                    <div class="flex items-center mb-6">
+                        <div class="flex rounded-md overflow-hidden mr-4" id="team-tasks-tabs">
+                            <button class="segmented-btn active" onclick="changeTeamTaskTab('current', this)">Текущие</button>
+                            <button class="segmented-btn" onclick="changeTeamTaskTab('completed', this)">Завершенные</button>
+                        </div>
+
+                        <button class="action-btn ml-4" onclick="showAddMemberModal()">
+                            Добавить участника
+                        </button>
+
+                        <button class="action-btn ml-2" onclick="editTeamTask()">
+                            Редактировать задачу
+                        </button>
+                    </div>
+
+                    <!-- Team Members List -->
+                    <div class="mb-8">
+                        <div id="team-members-container">
+                            <!-- Team members and their tasks will be added here dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button class="delete-btn" onclick="deleteTeamTask()">
+                            Удалить задачу
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Task Modal -->
+    <div id="create-task-modal" class="create-task-modal">
+    <div class="create-task-content">
+        <div class="create-task-header">
+            <h3 class="create-task-title" id="modal-task-title">Создать задачу</h3>
+            <button class="create-task-close" onclick="hideCreateTaskModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="create-task-form">
+            <div class="create-task-main">
+                <div class="form-group">
+                    <label class="form-label">Название:</label>
+                    <input type="text" class="form-input" placeholder="Введите название задачи" id="task-name">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Автор:</label>
+                    <div class="dropdown">
+                        <button class="form-input dropdown-toggle" onclick="toggleDropdown(this)">
+                            <span id="author-selected">Я</span>
+                        </button>
+                        <div class="dropdown-menu" id="author-dropdown">
+                            <div class="dropdown-item" onclick="selectDropdownItem(this, 'Я', 'author-selected')">Я</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Описание:</label>
+                    <textarea class="form-textarea" placeholder="Введите описание задачи" id="task-description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Дата начала:</label>
+                    <input type="date" class="form-input" id="start-date-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Дата окончания:</label>
+                    <input type="date" class="form-input" id="end-date-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Плановое время выполнения (дни):</label>
+                    <input type="number" class="form-input" placeholder="Введите количество дней" id="planned-days">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Проект:</label>
+                    <select class="form-select" id="task-project">
+                        <option value="">Выберите проект</option>
+                        <% if (typeof projects !== 'undefined' && projects.length > 0) { %>
+                            <% projects.forEach(p => { %>
+                                <option value="<%= p.id %>"><%= p.name %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Цена (руб):</label>
+                    <input type="number" class="form-input" placeholder="Введите стоимость задачи" id="task-price">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Теги:</label>
+                    <input type="text" class="form-input" placeholder="Введите теги через запятую" id="task-tags">
+                </div>
+
+                <div class="form-group">
+                    <input type="file" id="file-upload" class="file-input" multiple>
+                    <button class="file-upload-btn" onclick="document.getElementById('file-upload').click()">
+                        <i class="fas fa-paperclip"></i>
+                        Прикрепить файл
+                    </button>
+                    <div id="file-names" class="mt-2 text-sm"></div>
+                </div>
+            </div>
+
+            <div class="create-task-sidebar">
+                <div class="form-group">
+                    <label class="form-label">Статус:</label>
+                    <select class="form-select" id="task-status">
+                        <option>Запланировано</option>
+                        <option>В процессе</option>
+                        <option>На проверке</option>
+                        <option>Завершено</option>
+
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Тип:</label>
+                    <select class="form-select" id="task-type">
+                        <option selected>Задача</option>
+                        <option>Ошибка</option>
+                        <option>Улучшение</option>
+                        <option>Новая функция</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Приоритет:</label>
+                    <select class="form-select" id="task-priority">
+                        <option>Низкий</option>
+                        <option selected>Средний</option>
+                        <option>Высокий</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Исполнители:</label>
+                    <div class="multi-select-container">
+                        <div class="multi-select-selected" onclick="toggleMultiSelect('executors')">
+                            <span id="executors-selected-text">Выберите исполнителей</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="multi-select-options" id="executors-options">
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="executor-me" value="Я" onchange="updateSelectedExecutors()">
+                                <label for="executor-me">Я</label>
+                            </div>
+                            <!-- Team members will be added here dynamically -->
+                        </div>
+                        <div class="selected-items" id="executors-selected-items"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Комментаторы:</label>
+                    <div class="multi-select-container">
+                        <div class="multi-select-selected" onclick="toggleMultiSelect('commentators')">
+                            <span id="commentators-selected-text">Выберите комментаторов</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="multi-select-options" id="commentators-options">
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="commentator-me" value="Я" onchange="updateSelectedCommentators()">
+                                <label for="commentator-me">Я</label>
+                            </div>
+                            <!-- Team members will be added here dynamically -->
+                        </div>
+                        <div class="selected-items" id="commentators-selected-items"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="create-task-footer flex justify-between items-center">
+            <button class="delete-btn" onclick="confirmDeleteTask()">
+                Удалить задачу
+            </button>
+            <div class="flex space-x-2">
+                <button class="action-btn" onclick="hideCreateTaskModal()">
+                    Отмена
+                </button>
+                <button class="action-btn bg-green-600 hover:bg-green-700" id="save-task-btn" onclick="saveTask()">
+                    Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Add Member Modal -->
+    <div id="add-member-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold">Добавить участника</h3>
+            <button class="modal-close" onclick="hideAddMemberModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Имя участника:</label>
+                <input type="text" class="form-input" placeholder="Введите имя участника" id="member-name">
+            </div>
+        </div>
+        
+        <div class="modal-footer flex justify-end space-x-2">
+            <button class="action-btn" onclick="hideAddMemberModal()">Отмена</button>
+            <button class="action-btn bg-green-600 hover:bg-green-700" onclick="addMember()">Добавить</button>
+        </div>
+    </div>
+</div>
+
+
+    <div id="delete-confirm-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold">Подтверждение удаления</h3>
+            <button class="modal-close" onclick="hideDeleteConfirmModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <p id="delete-confirm-text">Вы уверены, что хотите удалить эту задачу?</p>
+        </div>
+        
+        <div class="modal-footer flex justify-end space-x-2">
+            <button class="action-btn" onclick="hideDeleteConfirmModal()">Отмена</button>
+            <button class="delete-btn" onclick="confirmDelete()">Удалить</button>
+        </div>
+    </div>
+</div>
+
+ <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white text-black rounded-lg p-6 w-80 relative">
+        <button onclick="closeInviteModal()" class="absolute top-2 right-2 text-gray-600 hover:text-black">
+            <i class="fas fa-times"></i>
+        </button>
+        <h3 class="text-xl font-semibold mb-4">Пригласить пользователя</h3>
+        <input type="email" id="inviteEmail" placeholder="Введите email" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+        <button onclick="sendInvite()"
+        class="w-full bg-[#735B92] text-white p-2 rounded hover:bg-[#5f4a78]">
+            Отправить приглашение
+        </button>
+    </div>
+</div>
+    <script>
+        // Global variables
+        let currentSection = 'tasks';
+        let myTasksTab = 'current';
+        let teamTasksTab = 'current';
+        let selectedTaskToDelete = null;
+        let selectedMemberForTaskDelete = null;
+        let selectedTaskId = null;
+        let selectedMemberId = null;
+        let selectedMemberForTaskAdd = null;
+        let isEditingTask = false;
+        let selectedExecutors = [];
+        let selectedCommentators = [];
+        let attachedFiles = [];
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderMyTasks();
+            renderTeamMembers();
+            updateTeamMemberDropdowns();
+            updateTaskCounters();
+            
+            // Handle file selection
+            document.getElementById('file-upload').addEventListener('change', function(e) {
+                const files = e.target.files;
+                attachedFiles = Array.from(files);
+                const fileNamesContainer = document.getElementById('file-names');
+                
+                if (files.length > 0) {
+                    let namesHTML = '';
+                    for (let i = 0; i < files.length; i++) {
+                        namesHTML += `<div>${files[i].name}</div>`;
+                    }
+                    fileNamesContainer.innerHTML = namesHTML;
+                } else {
+                    fileNamesContainer.innerHTML = '';
+                }
+            });
+        });
+
+        // Change section function
+        function changeSection(section) {
+            if (section === 'home') {
+                window.location.href = '/';
+                return;
+            }
+
+            currentSection = section;
+            document.getElementById('breadcrumb').innerHTML = `
+                <a href="/" class="breadcrumb-link">Моя страница</a> / ${getSectionName(section)}
+            `;
+
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+
+        function getSectionName(section) {
+            const sections = {
+                'tasks': 'Задачи',
+                'projects': 'Проекты и портфели',
+                'queue': 'Очередь',
+                'goals': 'Цели',
+                'boards': 'Доски задач',
+                'reports': 'Отчеты',
+                'more': 'Еще',
+                'team': 'Команда',
+                'notifications': 'Уведомления',
+                'support': 'Поддержка',
+                'settings': 'Настройки',
+                'account': 'Учетная запись'
+            };
+            return sections[section] || section;
+        }
+
+       async function markTaskAsCompleted(taskId) {
+    try {
+        const response = await fetch(`/tasks/${taskId}/complete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            const now = new Date();
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = true;
+                task.status = 'completed';
+                task.completionDate = now.toISOString();
+                const startDate = new Date(task.startDate);
+                task.timeSpent = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
+            }
+            renderMyTasks();
+            updateTaskCounters?.();
+        } else {
+            const result = await response.json();
+        }
+    } catch (err) {
+        console.error('Ошибка завершения задачи:', err);
+        alert('Ошибка при завершении задачи');
+    }
+}
+
+
+
+
+
+
+        // Show create task modal
+        function showCreateTaskModal() {
+            isEditingTask = false;
+            document.getElementById('modal-task-title').textContent = 'Создать задачу';
+            document.getElementById('save-task-btn').textContent = 'Сохранить';
+            
+            // Clear form
+            document.getElementById('task-name').value = '';
+            document.getElementById('task-description').value = '';
+            document.getElementById('start-date-input').value = '';
+            document.getElementById('end-date-input').value = '';
+            document.getElementById('planned-days').value = '';
+            document.getElementById('task-tags').value = '';
+            document.getElementById('task-status').value = 'В процессе';
+            document.getElementById('task-type').value = 'Задача';
+            document.getElementById('task-priority').value = 'Средний';
+            document.getElementById('author-selected').textContent = 'Я';
+            document.getElementById('file-names').innerHTML = '';
+            attachedFiles = [];
+            document.getElementById('file-upload').value = '';
+
+            // Clear multi-selects
+            selectedExecutors = [];
+            selectedCommentators = [];
+            updateSelectedExecutors();
+            updateSelectedCommentators();
+
+            document.getElementById('create-task-modal').style.display = 'flex';
+            document.getElementById('current-section').innerHTML = 'Задачи / Создать задачу';
+        }
+
+        // Hide create task modal
+        function hideCreateTaskModal() {
+            document.getElementById('create-task-modal').style.display = 'none';
+            document.getElementById('current-section').innerHTML = 'Задачи';
+        }
+
+        // Create task function
+      async function saveTask() {
+    const taskName = document.getElementById('task-name').value.trim();
+    if (!taskName) {
+        alert('Пожалуйста, введите название задачи');
+        return;
+    }
+
+    const taskData = {
+        name: taskName,
+        description: document.getElementById('task-description').value,
+        start_date: document.getElementById('start-date-input').value || null,
+        end_date: document.getElementById('end-date-input').value || null,
+        planned_days: parseInt(document.getElementById('planned-days').value) || 0,
+        project: document.getElementById('task-project').value || null,
+        price: parseFloat(document.getElementById('task-price').value) || 0,
+        tags: document.getElementById('task-tags').value ? 
+              document.getElementById('task-tags').value.split(',') : [],
+        status: document.getElementById('task-status').value,
+        type: document.getElementById('task-type').value,
+        priority: document.getElementById('task-priority').value,
+        author: document.getElementById('author-selected').textContent,
+        executors: selectedExecutors,
+        commentators: selectedCommentators,
+        files: attachedFiles.map(f => f.name),
+        completed: false,
+        time_spent: 0,
+        completion_date: null
+    };
+
+    try {
+        const url = isEditingTask ? `/tasks/${selectedTaskId}/update` : '/tasks';
+        const method = isEditingTask ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(taskData)
+        });
+
+        // First check if the response is OK
+        if (!response.ok) {
+            // Try to parse error as JSON, fall back to text if that fails
+            let errorMsg;
+            try {
+                const errorResponse = await response.json();
+                errorMsg = errorResponse.error || errorResponse.message || 'Неизвестная ошибка';
+            } catch (e) {
+                errorMsg = await response.text();
+            }
+            throw new Error(errorMsg);
+        }
+
+        // If successful, parse the JSON response
+        const result = await response.json();
+        
+        if (result.redirectTo) {
+            window.location.href = result.redirectTo;
+        } else {
+            window.location.reload();
+        }
+    } catch (err) {
+        console.error('Ошибка:', err);
+        alert(`Ошибка при сохранении задачи: ${err.message}`);
+    }
+}
+
+        // Update task counters
+        function updateTaskCounters() {
+            // Author tasks
+            const authorTasks = tasks.filter(task => !task.completed);
+            document.getElementById('author-counter').textContent = authorTasks.length;
+            if (authorTasks.length > 0) {
+                document.getElementById('author-tasks').innerHTML = authorTasks
+                    .map(task => `<div class="mb-1">${task.name}</div>`)
+                    .join('');
+            } else {
+                document.getElementById('author-tasks').textContent = 'Нет текущих задач';
+            }
+
+            // Executor tasks
+            const executorTasks = tasks.filter(task => !task.completed);
+            document.getElementById('executor-counter').textContent = executorTasks.length;
+            if (executorTasks.length > 0) {
+                document.getElementById('executor-tasks').innerHTML = executorTasks
+                    .map(task => `<div class="mb-1">${task.name}</div>`)
+                    .join('');
+            } else {
+                document.getElementById('executor-tasks').textContent = 'Нет текущих задач';
+            }
+
+            // Commentator tasks
+            const commentatorTasks = tasks.filter(task => !task.completed);
+            document.getElementById('commentator-counter').textContent = commentatorTasks.length;
+            if (commentatorTasks.length > 0) {
+                document.getElementById('commentator-tasks').innerHTML = commentatorTasks
+                    .map(task => `<div class="mb-1">${task.name}</div>`)
+                    .join('');
+            } else {
+                document.getElementById('commentator-tasks').textContent = 'Нет текущих задач';
+            }
+        }
+
+        // Toggle dropdown
+        function toggleDropdown(button) {
+            const dropdown = button.nextElementSibling;
+            const isOpen = dropdown.style.display === 'block';
+
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu !== dropdown) {
+                    menu.style.display = 'none';
+                }
+            });
+
+            // Toggle current dropdown
+            dropdown.style.display = isOpen ? 'none' : 'block';
+
+            // Close dropdown when clicking outside
+            if (!isOpen) {
+                setTimeout(() => {
+                    document.addEventListener('click', function closeDropdown(e) {
+                        if (!dropdown.contains(e.target) && e.target !== button) {
+                            dropdown.style.display = 'none';
+                            document.removeEventListener('click', closeDropdown);
+                        }
+                    });
+                }, 0);
+            }
+        }
+
+        // Select dropdown item
+        function selectDropdownItem(item, value, targetId) {
+            document.getElementById(targetId).textContent = value;
+            item.closest('.dropdown-menu').style.display = 'none';
+        }
+
+        // Change task tab function
+        function changeTaskTab(tab, button) {
+            myTasksTab = tab;
+            const buttons = document.querySelectorAll('#my-tasks-tabs button');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+            renderMyTasks();
+        }
+
+        // Change team task tab function
+        function changeTeamTaskTab(tab, button) {
+            teamTasksTab = tab;
+            const buttons = document.querySelectorAll('#team-tasks-tabs button');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+            renderTeamMembers();
+        }
+
+        // Render my tasks
+        
+        function renderMyTasks() {
+    const container = document.getElementById('my-tasks-container');
+    container.innerHTML = '';
+
+    const filteredTasks = tasks.filter(task => 
+        myTasksTab === 'current' ? !task.completed : task.completed
+    );
+
+    if (filteredTasks.length === 0) {
+        container.innerHTML = '<div class="p-4 text-center">Нет задач</div>';
+        return;
+    }
+
+    filteredTasks.forEach((task, index) => {
+        const taskElement = document.createElement('div');
+        taskElement.className = 'task-item';
+        if (index % 2 === 1) taskElement.classList.add('even');
+        if (selectedTaskId === task.id) taskElement.classList.add('selected');
+
+        const timeSpentText = task.completed && task.timeSpent
+            ? ` <span class="time-spent">(${task.timeSpent} дней)</span>`
+            : '';
+
+        taskElement.innerHTML = `
+            <span class="task-name">${task.name || '[Без названия]'}${timeSpentText}</span>
+            ${!task.completed ? `
+                <button class="check-btn" onclick="markTaskAsCompleted(${task.id})">
+                    <i class="fas fa-circle"></i>
+                </button>
+            ` : ''}
+        `;
+
+        // Tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'task-tooltip';
+        tooltip.innerHTML = `
+            <p><strong>Название:</strong> ${task.name}</p>
+            <p><strong>Описание:</strong> ${task.description || ''}</p>
+            <p><strong>Начало:</strong> ${task.startDate || ''}</p>
+            <p><strong>Окончание:</strong> ${task.endDate || ''}</p>
+            <p><strong>Плановое время:</strong> ${task.plannedDays || 0} дней</p>
+            <p><strong>Автор:</strong> ${task.author}</p>
+            ${task.executors?.length ? `<p><strong>Исполнители:</strong> ${task.executors.join(', ')}</p>` : ''}
+            ${task.commentators?.length ? `<p><strong>Комментаторы:</strong> ${task.commentators.join(', ')}</p>` : ''}
+            ${task.files?.length ? `<p><strong>Файлы:</strong> ${task.files.join(', ')}</p>` : ''}
+            ${task.completed && task.timeSpent ? `<p><strong>Затраченное время:</strong> ${task.timeSpent} дней</p>` : ''}
+        `;
+        taskElement.appendChild(tooltip);
+
+        taskElement.onclick = (e) => {
+            if (!e.target.closest('.check-btn')) {
+                selectedTaskId = task.id;
+                renderMyTasks(); // обновляем выделение
+            }
+        };
+
+        container.appendChild(taskElement);
+    });
+}
+
+
+        // Select task
+        function selectTask(taskId) {
+            selectedTaskId = taskId;
+            selectedMemberId = null;
+            renderMyTasks();
+            renderTeamMembers();
+        }
+
+       // Edit selected task
+       function editSelectedTask() {
+    if (selectedTaskId === null) {
+        alert('Пожалуйста, выберите задачу для редактирования');
+        return;
+    }
+
+    isEditingTask = true;
+    document.getElementById('modal-task-title').textContent = 'Редактировать задачу';
+    document.getElementById('save-task-btn').textContent = 'Обновить';
+    document.getElementById('create-task-modal').style.display = 'flex';
+
+    // Поиск задачи среди своих задач и задач команды
+    let task = tasks.find(t => t.id === selectedTaskId);
+    if (!task) {
+        for (const member of teamMembers) {
+            const foundTask = member.tasks.find(t => t.id === selectedTaskId);
+            if (foundTask) {
+                task = foundTask;
+                selectedMemberId = member.id;
+                break;
+            }
+        }
+    }
+
+    if (task) {
+        // Заполнение полей формы
+        document.getElementById('task-name').value = task.name || '';
+        document.getElementById('task-description').value = task.description || '';
+        document.getElementById('start-date-input').value = task.startDate || '';
+        document.getElementById('end-date-input').value = task.endDate || '';
+        document.getElementById('planned-days').value = task.plannedDays || '';
+        document.getElementById('task-project').value = task.project || '';
+        document.getElementById('task-price').value = task.price || '';
+        document.getElementById('task-tags').value = task.tags || '';
+        document.getElementById('task-status').value = task.status || 'В процессе';
+        document.getElementById('task-type').value = task.type || 'Задача';
+        document.getElementById('task-priority').value = task.priority || 'Средний';
+        document.getElementById('author-selected').textContent = task.author || 'Я';
+        
+        // Обновление выбранных исполнителей и комментаторов
+        selectedExecutors = task.executors || [];
+        selectedCommentators = task.commentators || [];
+        updateSelectedExecutors();
+        updateSelectedCommentators();
+        
+        // Отображение прикрепленных файлов
+        document.getElementById('file-names').innerHTML = task.files 
+            ? task.files.map(f => `<div>${f}</div>`).join('') 
+            : '';
+    }
+}
+
+// Toggle task completion
+       async function toggleTaskCompletion(taskId, event) {
+            event.stopPropagation();
+
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const completed = !task.completed;
+                let timeSpent = task.time_spent;
+                let completionDate = task.completion_date;
+                
+                if (completed) {
+                    // Calculate time spent if task is completed
+                    if (task.start_date) {
+                        const startDate = new Date(task.start_date);
+                        const now = new Date();
+                        completionDate = now.toISOString().split('T')[0];
+                        
+                        // Calculate difference in days
+                        const diffTime = Math.abs(now - startDate);
+                        timeSpent = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                } else {
+                    timeSpent = 0;
+                    completionDate = null;
+                }
+
+                try {
+                    const response = await fetch(`/tasks/${taskId}/update`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            completed: completed,
+                            time_spent: timeSpent,
+                            completion_date: completionDate
+                        })
+                    });
+
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        const error = await response.json();
+                        alert(error.message || 'Ошибка при обновлении задачи');
+                    }
+                } catch (err) {
+                    console.error('Ошибка:', err);
+                    alert('Ошибка при обновлении задачи');
+                }
+                renderMyTasks();
+                updateTaskCounters();
+            }
+        }
+
+                
+               
+            
+        
+
+        // Delete my task function
+        function deleteMyTask() {
+            if (selectedTaskId === null) {
+                alert('Пожалуйста, выберите задачу для удаления');
+                return;
+            }
+
+            selectedMemberForTaskDelete = null;
+
+            document.getElementById('delete-confirm-text').textContent = 
+                'Вы уверены, что хотите удалить выбранную задачу?';
+            document.getElementById('delete-confirm-modal').style.display = 'flex';
+        }
+
+        // Show add member modal
+        function showAddMemberModal() {
+            document.getElementById('add-member-modal').style.display = 'flex';
+        }
+
+        // Hide add member modal
+        function hideAddMemberModal() {
+            document.getElementById('add-member-modal').style.display = 'none';
+            document.getElementById('member-name').value = '';
+        }
+
+        // Add member function
+        function addMember() {
+            const name = document.getElementById('member-name').value.trim();
+
+            if (name === '') {
+                alert('Пожалуйста, введите имя участника');
+                return;
+            }
+
+            const newMember = {
+                id: Date.now(),
+                name: name,
+                tasks: []
+            };
+
+            teamMembers.push(newMember);
+            renderTeamMembers();
+            updateTeamMemberDropdowns();
+            hideAddMemberModal();
+        }
+
+        // Update team member dropdowns
+        function updateTeamMemberDropdowns() {
+            const executorDropdown = document.getElementById('executor-dropdown');
+            const commentatorDropdown = document.getElementById('commentator-dropdown');
+            const executorsOptions = document.getElementById('executors-options');
+            const commentatorsOptions = document.getElementById('commentators-options');
+
+            // Clear existing items except "Я"
+            while (executorDropdown.children.length > 1) {
+                executorDropdown.removeChild(executorDropdown.lastChild);
+            }
+
+            while (commentatorDropdown.children.length > 1) {
+                commentatorDropdown.removeChild(commentatorDropdown.lastChild);
+            }
+
+            // Clear multi-select options except "Я"
+            while (executorsOptions.children.length > 1) {
+                executorsOptions.removeChild(executorsOptions.lastChild);
+            }
+
+            while (commentatorsOptions.children.length > 1) {
+                commentatorsOptions.removeChild(commentatorsOptions.lastChild);
+            }
+
+            // Add team members to all dropdowns
+            teamMembers.forEach(member => {
+                // Single select dropdowns
+                const executorItem = document.createElement('div');
+                executorItem.className = 'dropdown-item';
+                executorItem.textContent = member.name;
+                executorItem.onclick = function() {
+                    selectDropdownItem(this, member.name, 'executor-selected');
+                };
+                executorDropdown.appendChild(executorItem);
+
+                const commentatorItem = document.createElement('div');
+                commentatorItem.className = 'dropdown-item';
+                commentatorItem.textContent = member.name;
+                commentatorItem.onclick = function() {
+                    selectDropdownItem(this, member.name, 'commentator-selected');
+                };
+                commentatorDropdown.appendChild(commentatorItem);
+
+                // Multi-select options
+                const executorOption = document.createElement('div');
+                executorOption.className = 'multi-select-option';
+                executorOption.innerHTML = `
+                    <input type="checkbox" id="executor-${member.id}" value="${member.name}" onchange="updateSelectedExecutors()">
+                    <label for="executor-${member.id}">${member.name}</label>
+                `;
+                executorsOptions.appendChild(executorOption);
+
+                const commentatorOption = document.createElement('div');
+                commentatorOption.className = 'multi-select-option';
+                commentatorOption.innerHTML = `
+                    <input type="checkbox" id="commentator-${member.id}" value="${member.name}" onchange="updateSelectedCommentators()">
+                    <label for="commentator-${member.id}">${member.name}</label>
+                `;
+                commentatorsOptions.appendChild(commentatorOption);
+            });
+        }
+
+        // Toggle multi-select dropdown
+        function toggleMultiSelect(type) {
+            const options = document.getElementById(`${type}-options`);
+            const isOpen = options.style.display === 'block';
+
+            // Close all other dropdowns
+            document.querySelectorAll('.multi-select-options').forEach(menu => {
+                if (menu !== options) {
+                    menu.style.display = 'none';
+                }
+            });
+
+            // Toggle current dropdown
+            options.style.display = isOpen ? 'none' : 'block';
+
+            // Close dropdown when clicking outside
+            if (!isOpen) {
+                setTimeout(() => {
+                    document.addEventListener('click', function closeDropdown(e) {
+                        const clickedElement = e.target;
+                        if (!options.contains(clickedElement) && 
+                             !clickedElement.classList.contains('multi-select-selected') && 
+                             !clickedElement.closest('.multi-select-selected')) {
+                            options.style.display = 'none';
+                            document.removeEventListener('click', closeDropdown);
+                        }
+                    });
+                }, 0);
+            }
+        }
+
+        // Update selected executors
+        function updateSelectedExecutors() {
+            const executorsOptions = document.getElementById('executors-options');
+            const checkboxes = executorsOptions.querySelectorAll('input[type="checkbox"]');
+            
+            selectedExecutors = [];
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedExecutors.push(checkbox.value);
+                }
+            });
+
+            // Update UI
+            const selectedText = document.getElementById('executors-selected-text');
+            const selectedItemsContainer = document.getElementById('executors-selected-items');
+            
+            if (selectedExecutors.length === 0) {
+                selectedText.textContent = 'Выберите исполнителей';
+                selectedItemsContainer.innerHTML = '';
+            } else {
+                selectedText.textContent = `Выбрано: ${selectedExecutors.length}`;
+                
+                let itemsHTML = '';
+                selectedExecutors.forEach(executor => {
+                    itemsHTML += `
+                        <div class="selected-item">
+                            ${executor}
+                            <button onclick="removeSelectedExecutor('${executor}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                selectedItemsContainer.innerHTML = itemsHTML;
+            }
+        }
+
+        // Remove selected executor
+        function removeSelectedExecutor(executor) {
+            const executorsOptions = document.getElementById('executors-options');
+            const checkbox = executorsOptions.querySelector(`input[value="${executor}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                updateSelectedExecutors();
+            }
+        }
+
+        // Update selected commentators
+        function updateSelectedCommentators() {
+            const commentatorsOptions = document.getElementById('commentators-options');
+            const checkboxes = commentatorsOptions.querySelectorAll('input[type="checkbox"]');
+            
+            selectedCommentators = [];
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedCommentators.push(checkbox.value);
+                }
+            });
+
+            // Update UI
+            const selectedText = document.getElementById('commentators-selected-text');
+            const selectedItemsContainer = document.getElementById('commentators-selected-items');
+            
+            if (selectedCommentators.length === 0) {
+                selectedText.textContent = 'Выберите комментаторов';
+                selectedItemsContainer.innerHTML = '';
+            } else {
+                selectedText.textContent = `Выбрано: ${selectedCommentators.length}`;
+                
+                let itemsHTML = '';
+                selectedCommentators.forEach(commentator => {
+                    itemsHTML += `
+                        <div class="selected-item">
+                            ${commentator}
+                            <button onclick="removeSelectedCommentator('${commentator}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                selectedItemsContainer.innerHTML = itemsHTML;
+            }
+        }
+
+        // Remove selected commentator
+        function removeSelectedCommentator(commentator) {
+            const commentatorsOptions = document.getElementById('commentators-options');
+            const checkbox = commentatorsOptions.querySelector(`input[value="${commentator}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                updateSelectedCommentators();
+            }
+        }
+
+        // Render team members
+        function renderTeamMembers() {
+            const container = document.getElementById('team-members-container');
+            container.innerHTML = '';
+
+            if (teamMembers.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center">Нет участников</div>';
+                return;
+            }
+
+            teamMembers.forEach((member, index) => {
+                const memberElement = document.createElement('div');
+                memberElement.className = 'member-item';
+                if (index % 2 === 1) {
+                    memberElement.classList.add('even');
+                }
+
+                const memberHeader = document.createElement('div');
+                memberHeader.className = 'member-header';
+                memberHeader.innerHTML = `
+                    <span class="font-medium">${member.name}</span>
+                    <i class="fas fa-chevron-down"></i>
+                `;
+
+                const tasksContainer = document.createElement('div');
+                tasksContainer.className = 'member-tasks';
+
+                const filteredTasks = member.tasks.filter(task => 
+                    teamTasksTab === 'current' ? !task.completed : task.completed
+                );
+
+                if (filteredTasks.length === 0) {
+                    tasksContainer.innerHTML = '<div class="p-4 text-center">Нет задач</div>';
+                } else {
+                    filteredTasks.forEach(task => {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = 'task-item';
+                        if (selectedMemberId === member.id && selectedTaskId === task.id) {
+                            taskElement.classList.add('selected');
+                        }
+                                                
+                        // Create tooltip with task details
+                        taskCard.addEventListener('mouseenter', (e) => {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'task-tooltip';
+
+    let tooltipContent = `<p><strong>Название:</strong> ${task.name}</p>`;
+    if (task.description) {
+        tooltipContent += `<p><strong>Описание:</strong> ${task.description}</p>`;
+    }
+    if (task.startDate) {
+        tooltipContent += `<p><strong>Начало:</strong> ${task.startDate}</p>`;
+    }
+    if (task.endDate) {
+        tooltipContent += `<p><strong>Окончание:</strong> ${task.endDate}</p>`;
+    }
+    if (task.plannedDays) {
+        tooltipContent += `<p><strong>Плановое время:</strong> ${task.plannedDays} дней</p>`;
+    }
+    tooltipContent += `<p><strong>Автор:</strong> ${task.author}</p>`;
+    if (task.executors && task.executors.length > 0) {
+        tooltipContent += `<p><strong>Исполнители:</strong> ${task.executors.join(', ')}</p>`;
+    }
+    if (task.commentators && task.commentators.length > 0) {
+        tooltipContent += `<p><strong>Комментаторы:</strong> ${task.commentators.join(', ')}</p>`;
+    }
+    if (task.files && task.files.length > 0) {
+        tooltipContent += `<p><strong>Файлы:</strong> ${task.files.join(', ')}</p>`;
+    }
+    if (task.completed && task.timeSpent) {
+        tooltipContent += `<p><strong>Затраченное время:</strong> ${task.timeSpent} дней</p>`;
+    }
+
+    tooltip.innerHTML = tooltipContent;
+
+    tooltip.style.position = 'absolute';
+    tooltip.style.zIndex = '1000';
+    tooltip.style.background = 'white';
+    tooltip.style.border = '1px solid #ccc';
+    tooltip.style.padding = '10px';
+    tooltip.style.borderRadius = '6px';
+    tooltip.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+    tooltip.style.maxWidth = '300px';
+
+    document.body.appendChild(tooltip);
+
+    const rect = taskCard.getBoundingClientRect();
+    tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    tooltip.style.left = `${rect.left + window.scrollX}px`;
+
+    taskCard.addEventListener('mouseleave', () => {
+        if (tooltip && tooltip.parentNode) {
+            tooltip.remove();
+        }
+    });
+});
+
+
+                        // Add time spent for completed tasks
+                        let timeSpentText = '';
+                        if (task.completed && task.timeSpent) {
+                            timeSpentText = `<span class="time-spent">(${task.timeSpent} дней)</span>`;
+                        }
+
+                        taskElement.innerHTML = `
+                            <span>${task.name}${timeSpentText}</span>
+                            <button class="check-btn" onclick="toggleTeamTaskCompletion(${member.id}, ${task.id}, event)">
+                                <i class="fas fa-${task.completed ? 'check-circle' : 'circle'}"></i>
+                            </button>
+                        `;
+
+                        taskElement.appendChild(tooltip);
+
+                        taskElement.addEventListener('click', (e) => {
+                            if (!e.target.classList.contains('check-btn')) {
+                                selectTeamTask(member.id, task.id);
+                            }
+                        });
+                        tasksContainer.appendChild(taskElement);
+                    });
+                }
+
+                memberHeader.addEventListener('click', () => {
+                    const icon = memberHeader.querySelector('i');
+                    if (tasksContainer.classList.contains('expanded')) {
+                        tasksContainer.classList.remove('expanded');
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    } else {
+                        tasksContainer.classList.add('expanded');
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    }
+                });
+
+                memberElement.appendChild(memberHeader);
+                memberElement.appendChild(tasksContainer);
+                container.appendChild(memberElement);
+            });
+        }
+
+        // Select team task
+        function selectTeamTask(memberId, taskId) {
+            selectedMemberId = memberId;
+            selectedTaskId = taskId;
+            renderMyTasks();
+            renderTeamMembers();
+        }
+
+        // Toggle team task completion
+        function toggleTeamTaskCompletion(memberId, taskId, event) {
+            event.stopPropagation();
+
+            const member = teamMembers.find(m => m.id === memberId);
+            if (!member) return;
+
+            const task = member.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                
+                if (task.completed) {
+                    // Calculate time spent if task is completed
+                    if (task.startDate) {
+                        const startDate = new Date(task.startDate);
+                        const completionDate = new Date();
+                        task.completionDate = completionDate.toISOString().split('T')[0];
+                        
+                        // Calculate difference in days
+                        const diffTime = Math.abs(completionDate - startDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        task.timeSpent = diffDays;
+                    }
+                } else {
+                    task.timeSpent = 0;
+                    task.completionDate = null;
+                }
+                
+                renderTeamMembers();
+            }
+        }
+
+        // Edit team task function
+        function editTeamTask() {
+            if (selectedMemberId === null || selectedTaskId === null) {
+                alert('Пожалуйста, выберите задачу участника для редактирования');
+                return;
+            }
+
+            editSelectedTask();
+        }
+
+        // Delete team task function
+        function deleteTeamTask() {
+            if (selectedMemberId === null || selectedTaskId === null) {
+                alert('Пожалуйста, выберите задачу участника для удаления');
+                return;
+            }
+
+            selectedMemberForTaskDelete = selectedMemberId;
+
+            document.getElementById('delete-confirm-text').textContent = 
+                'Вы уверены, что хотите удалить выбранную задачу у участника?';
+            document.getElementById('delete-confirm-modal').style.display = 'flex';
+        }
+
+        // Hide delete confirmation modal
+        function hideDeleteConfirmModal() {
+            document.getElementById('delete-confirm-modal').style.display = 'none';
+            selectedTaskToDelete = null;
+            selectedMemberForTaskDelete = null;
+        }
+
+        // Confirm delete function
+        
+
+        // Confirm delete task in create modal
+        async function confirmDelete() {
+    try {
+        const response = await fetch(`/tasks/${selectedTaskId}/delete`, {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Ошибка при удалении задачи');
+        }
+    } catch (err) {
+        console.error('Ошибка:', err);
+        alert('Ошибка при удалении задачи');
+    } finally {
+        hideDeleteConfirmModal();
+    }
+}
+
+function openInviteModal() {
+        document.getElementById('inviteModal').classList.remove('hidden');
+    }
+
+    function closeInviteModal() {
+        document.getElementById('inviteModal').classList.add('hidden');
+    }
+
+    async function sendInvite() {
+        const email = document.getElementById('inviteEmail').value.trim();
+        if (!email) {
+            alert('Введите email');
+            return;
+        }
+
+        try {
+            const res = await fetch('/invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await res.json();
+            alert(data.message);
+            if (data.success) {
+                document.getElementById('inviteEmail').value = '';
+                closeInviteModal();
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка при отправке приглашения');
+        }
+    }
+    </script>
+</body>
+</html>

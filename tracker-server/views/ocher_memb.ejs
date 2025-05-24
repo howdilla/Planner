@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Очередь задач</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .sidebar {
+      background: linear-gradient(to bottom, #3A3F58, #6F637E);
+    }
+    .task-table th, .task-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #ccc;
+    }
+    .task-table tr:hover {
+      background-color: rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body class="bg-[#3A3F58] text-white font-sans">
+  <div class="flex">
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-80 h-screen fixed md:relative">
+      <div class="p-4">
+        <h1 class="text-2xl font-bold mb-6">Planner</h1>
+        <div class="relative mb-8">
+          <input type="text" placeholder="Поиск..." class="w-full pl-10 pr-4 py-2 bg-[#4A4F6A] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+          <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+        </div>
+        <nav class="mb-8">
+          <ul class="space-y-2">
+            <li><a href="/mem_tasks" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-tasks"></i><span>Задачи</span></a></li>
+            <li><a href="/port_memb" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-project-diagram"></i><span>Проекты и портфели</span></a></li>
+            <li><a href="/queue/member" class="flex items-center space-x-3 p-3 rounded-lg bg-[#4A4F6A]"><i class="fas fa-stream"></i><span>Очередь</span></a></li>
+            <li><a href="/goals" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bullseye"></i><span>Цели</span></a></li>
+            <li><a href="//boards" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-columns"></i><span>Доски задач</span></a></li>
+            <li><a href="/reports" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-chart-bar"></i><span>Отчеты</span></a></li>
+            <li><a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-ellipsis-h"></i><span>Еще</span></a></li>
+          </ul>
+        </nav>
+        <div class="mb-8">
+          <a href="/team" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left">
+    <i class="fas fa-users"></i><span>Команда</span>
+</a>
+          
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-4">
+          <ul class="space-y-2">
+            <li><a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bell"></i><span>Уведомления</span></a></li>
+            <li><a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-question-circle"></i><span>Поддержка</span></a></li>
+            <li><a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-cog"></i><span>Настройки</span></a></li>
+            <li><a href="/user" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-user-circle"></i><span class="text-lg">Учетная запись</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-0 md:ml-80">
+      <!-- Top Bar -->
+      <div class="bg-[#4A4F6A] p-4 flex justify-between items-center">
+  <div class="flex items-center space-x-4">
+    <button id="sidebarToggle" class="md:hidden p-2 text-white">
+      <i class="fas fa-bars"></i>
+    </button>
+    <h2 id="breadcrumb" class="text-xl">
+      <a href="/" class="hover:text-blue-300 transition-colors">Моя страница</a> / <span id="current-section">Очередь</span>
+    </h2>
+  </div>
+  <a href="/user" class="px-4 py-2 bg-[#6F637E] rounded-lg hover:bg-[#5E536D] inline-block">
+    <i class="fas fa-pencil-alt mr-2"></i>
+    Редактировать
+  </a>
+</div>
+
+      <!-- Task Queue Table -->
+      <div class="p-6">
+        <div class="flex justify-end space-x-4 mb-4">
+          <button onclick="sortTasks('price')" class="bg-[#735B92] px-4 py-2 rounded hover:bg-[#5f4a78]">Сортировать по цене</button>
+          <button onclick="sortTasks('endDate')" class="bg-[#735B92] px-4 py-2 rounded hover:bg-[#5f4a78]">По дате завершения</button>
+          <button onclick="sortTasks('priority')" class="bg-[#735B92] px-4 py-2 rounded hover:bg-[#5f4a78]">По приоритету</button>
+        </div>
+        <table class="w-full text-left task-table">
+          <thead style="background-color: #9B8FAA; color: white;">
+            <tr>
+              <th>Задача</th>
+              <th>Описание</th>
+              <th>Цена</th>
+              <th>Дата окончания</th>
+              <th>Приоритет</th>
+            </tr>
+          </thead>
+          <tbody id="taskTableBody">
+            <% tasks.forEach(task => { %>
+              <tr>
+                <td><%= task.name %></td>
+                <td><%= task.description %></td>
+                <td><%= task.price %></td>
+                <td><%= task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : '-' %></td>
+                <td><%= task.priority %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+   <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white text-black rounded-lg p-6 w-80 relative">
+        <button onclick="closeInviteModal()" class="absolute top-2 right-2 text-gray-600 hover:text-black">
+            <i class="fas fa-times"></i>
+        </button>
+        <h3 class="text-xl font-semibold mb-4">Пригласить пользователя</h3>
+        <input type="email" id="inviteEmail" placeholder="Введите email" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+        <button onclick="sendInvite()"
+        class="w-full bg-[#735B92] text-white p-2 rounded hover:bg-[#5f4a78]">
+            Отправить приглашение
+        </button>
+    </div>
+</div>
+  <script>
+   function changeSection(section) {
+            if (section === 'home') {
+                window.location.href = '/';
+                return;
+            }
+
+            currentSection = section;
+            document.getElementById('breadcrumb').innerHTML = `
+                <a href="/" class="breadcrumb-link">Моя страница</a> / ${getSectionName(section)}
+            `;
+
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+
+        function getSectionName(section) {
+            const sections = {
+                'tasks': 'Задачи',
+                'projects': 'Проекты и портфели',
+                'queue': 'Очередь',
+                'goals': 'Цели',
+                'boards': 'Доски задач',
+                'reports': 'Отчеты',
+                'more': 'Еще',
+                'team': 'Команда',
+                'notifications': 'Уведомления',
+                'support': 'Поддержка',
+                'settings': 'Настройки',
+                'account': 'Учетная запись'
+            };
+            return sections[section] || section;
+        }
+  document.getElementById('sidebarToggle').addEventListener('click', () => {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+
+  function sortTasks(criteria) {
+    const rows = Array.from(document.querySelectorAll('#taskTableBody tr'));
+
+    const getVal = (el, index) => el.children[index].textContent.trim();
+    const parseDate = str => {
+      const date = new Date(str);
+      return isNaN(date) ? Infinity : date;
+    };
+    const mapPriority = p => {
+      const normalized = p.toLowerCase();
+      if (normalized.includes('выс')) return 3;
+      if (normalized.includes('сред')) return 2;
+      if (normalized.includes('низ')) return 1;
+      return 0;
+    };
+
+    rows.sort((a, b) => {
+      switch (criteria) {
+        case 'price':
+          return parseFloat(getVal(b, 2)) - parseFloat(getVal(a, 2));
+        case 'endDate':
+          return parseDate(getVal(a, 3)) - parseDate(getVal(b, 3)); // от ранней к поздней
+        case 'priority':
+          return mapPriority(getVal(b, 4)) - mapPriority(getVal(a, 4)); // high (3) сверху
+        default:
+          return 0;
+      }
+    });
+
+    const tbody = document.getElementById('taskTableBody');
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
+  }
+  function openInviteModal() {
+        document.getElementById('inviteModal').classList.remove('hidden');
+    }
+
+    function closeInviteModal() {
+        document.getElementById('inviteModal').classList.add('hidden');
+    }
+
+    async function sendInvite() {
+        const email = document.getElementById('inviteEmail').value.trim();
+        if (!email) {
+            alert('Введите email');
+            return;
+        }
+
+        try {
+            const res = await fetch('/invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await res.json();
+            alert(data.message);
+            if (data.success) {
+                document.getElementById('inviteEmail').value = '';
+                closeInviteModal();
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка при отправке приглашения');
+        }
+    }
+</script>
+</body>
+</html>

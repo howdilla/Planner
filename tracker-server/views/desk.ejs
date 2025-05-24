@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner - Доски задач</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .sidebar {
+            background: linear-gradient(to bottom, #3A3F58, #6F637E);
+        }
+        .widget {
+            background-color: #6F637E;
+            border-radius: 10px;
+        }
+        .task-counter {
+            background-color: #3A3F58;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .divider {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        .kanban-column {
+            min-height: 600px;
+            background-color: #4A4F6A;
+            border-radius: 10px;
+            flex: 1;
+        }
+        .task-card {
+            background-color: #3A3F58;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: grab;
+            margin-bottom: 12px;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .task-card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        .breadcrumb-link {
+            color: #DCD1E9;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .breadcrumb-link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        .priority-high {
+            border-left: 4px solid #EF4444;
+        }
+        .priority-medium {
+            border-left: 4px solid #F59E0B;
+        }
+        .priority-low {
+            border-left: 4px solid #10B981;
+        }
+        .filter-section {
+            background-color: #4A4F6A;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: absolute;
+                z-index: 50;
+                height: 100vh;
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .kanban-columns {
+                flex-direction: column;
+            }
+            .kanban-column {
+                min-height: auto;
+                margin-bottom: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#3A3F58] font-sans text-white">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="sidebar w-80 h-screen fixed md:relative">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold mb-6">Planner</h1>
+
+                <!-- Search -->
+                <div class="relative mb-8">
+                    <input type="text" placeholder="Поиск..." class="w-full pl-10 pr-4 py-2 bg-[#4A4F6A] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+
+                <!-- Main Menu -->
+                <nav class="mb-8">
+                    <ul class="space-y-2">
+                        <li><a href="/tasks" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-tasks"></i><span>Задачи</span></a></li>
+                        <li><a href="/project" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-project-diagram"></i><span>Проекты и портфели</span></a></li>
+                        <li><a href="/queue/leader" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-stream"></i><span>Очередь</span></a></li>
+                        <li><a href="/goals" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bullseye"></i><span>Цели</span></a></li>
+                        <li><a href="/boards" class="flex items-center space-x-3 p-3 rounded-lg bg-[#4A4F6A]"><i class="fas fa-columns"></i><span>Доски задач</span></a></li>
+                        <li><a href="/reports" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-chart-bar"></i><span>Отчеты</span></a></li>
+                        <li><a href="/more" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-ellipsis-h"></i><span>Еще</span></a></li>
+                    </ul>
+                </nav>
+
+                <div class="divider"></div>
+
+                <!-- Team Section -->
+                <div class="mb-8">
+                    <a href="/team" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left">
+    <i class="fas fa-users"></i><span>Команда</span>
+</a>
+                    <button onclick="openInviteModal()" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A] text-left mt-2">
+                        <i class="fas fa-user-plus"></i><span>Добавить пользователя</span>
+                    </button>
+                </div>
+
+                <!-- Bottom Menu -->
+                <div class="absolute bottom-0 left-0 right-0 p-4">
+                    <ul class="space-y-2">
+                        <li><a href="/notifications" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-bell"></i><span>Уведомления</span></a></li>
+                        <li><a href="/support" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-question-circle"></i><span>Поддержка</span></a></li>
+                        <li><a href="/settings" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-cog"></i><span>Настройки</span></a></li>
+                        <li><a href="/user" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#4A4F6A]"><i class="fas fa-user-circle"></i><span class="text-lg">Учетная запись</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-0 md:ml-80">
+            <!-- Top Bar -->
+            <button id="sidebarToggle" class="md:hidden p-2">
+  <i class="fas fa-bars"></i>
+</button>
+
+             <div class="bg-[#4A4F6A] p-4 flex justify-between items-center">
+                <h2 id="breadcrumb" class="text-xl">
+                    <a href="/" class="breadcrumb-link">Моя страница</a> / <span id="current-section">Доски задач</span>
+                </h2>
+                <a href="/user" class="px-4 py-2 bg-[#6F637E] rounded-lg hover:bg-[#5E536D] inline-block">
+    <i class="fas fa-pencil-alt mr-2"></i>
+    Редактировать
+</a>
+            </div>
+
+            <!-- Main Board Content -->
+            <div class="p-6">
+                <!-- Filters Section -->
+                <div class="filter-section mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Фильтры задач</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <!-- User Filter -->
+                        <div>
+                            <label for="userFilter" class="block text-sm font-medium mb-1">Пользователь</label>
+                            <div class="relative">
+                                <select id="userFilter" class="w-full appearance-none bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Все пользователи</option>
+                                    <% users.forEach(u => { %>
+                                        <option value="<%= u.id %>" <%= String(user) === String(u.id) ? 'selected' : '' %>><%= u.name %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div>
+                            <label for="statusFilter" class="block text-sm font-medium mb-1">Статус</label>
+                            <div class="relative">
+                                <select id="statusFilter" class="w-full appearance-none bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Все статусы</option>
+                                   <option value="Запланировано" <%= status === 'Запланировано' ? 'selected' : '' %>>Запланировано</option>
+<option value="В процессе" <%= status === 'В процессе' ? 'selected' : '' %>>В процессе</option>
+<option value="На проверке" <%= status === 'На проверке' ? 'selected' : '' %>>На проверке</option>
+<option value="completed" <%= status === 'completed' ? 'selected' : '' %>>Завершено</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date Range Filter -->
+                        <div>
+                            <label for="dateFromFilter" class="block text-sm font-medium mb-1">Дата с</label>
+                            <input type="date" id="dateFromFilter" class="w-full bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+
+                        <div>
+                            <label for="dateToFilter" class="block text-sm font-medium mb-1">Дата по</label>
+                            <input type="date" id="dateToFilter" class="w-full bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+
+                        <!-- Project Filter -->
+                        <div>
+                            <label for="projectFilter" class="block text-sm font-medium mb-1">Проект</label>
+                            <div class="relative">
+                                <select id="projectFilter" class="w-full appearance-none bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Все проекты</option>                                  
+                                        <% projects.forEach(p => { %>
+                                        <option value="<%= p.id %>" <%= String(project) === String(p.id) ? 'selected' : '' %>><%= p.name %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Portfolio Filter -->
+                        <div>
+                            <label for="portfolioFilter" class="block text-sm font-medium mb-1">Портфель</label>
+                            <div class="relative">
+                                <select id="portfolioFilter" class="w-full appearance-none bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Все портфели</option>
+                                        <% portfolios.forEach(p => { %>
+                                            <option value="<%= p.id %>" <%= portfolio === String(p.id) ? 'selected' : '' %>><%= p.name %></option>
+                                        <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Priority Filter -->
+                        <div>
+                            <label for="priorityFilter" class="block text-sm font-medium mb-1">Приоритет</label>
+                            <div class="relative">
+                                <select id="priorityFilter" class="w-full appearance-none bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Все приоритеты</option>
+                                    <option value="high">Высокий</option>
+                                    <option value="medium">Средний</option>
+                                    <option value="low">Низкий</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tag Filter -->
+                        <div>
+                            <label for="tagFilter" class="block text-sm font-medium mb-1">Тег</label>
+                            <div class="relative">
+                                <select id="tagFilter" class="w-full appearance-none bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Все теги</option>
+                                    <% tags.forEach(t => { %>
+                                        <option value="<%= t %>" <%= tag === t ? 'selected' : '' %>><%= t %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-4 space-x-3">
+                        <button onclick="applyFilters()" class="px-4 py-2 bg-[#735B92] rounded-lg hover:bg-[#5f4a78]">
+                            Применить фильтры
+                        </button>
+                        <button onclick="resetFilters()" class="px-4 py-2 bg-[#4A4F6A] border border-[#6F637E] rounded-lg hover:bg-[#3A3F58]">
+                            Сбросить фильтры
+                        </button>
+                    </div>
+                </div>
+
+                
+                <!-- Kanban Board -->
+                <div id="kanbanBoard">
+                <div class="mb-6 flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Моя канбан-доска</h2>
+                    <div class="flex space-x-2">
+                        <button id="exportBtn" class="px-4 py-2 bg-[#4A4F6A] border border-[#6F637E] rounded-lg hover:bg-[#3A3F58]">
+    <i class="fas fa-file-export mr-2"></i>Экспорт
+</button>
+                        <button onclick="refreshBoard()" class="px-4 py-2 bg-[#4A4F6A] border border-[#6F637E] rounded-lg hover:bg-[#3A3F58]">
+                            <i class="fas fa-sync-alt mr-2"></i>Обновить
+                        </button>
+                    </div>
+                </div>
+
+                <div class="kanban-columns flex space-x-4 overflow-x-auto pb-4">
+                    <!-- Backlog Column -->
+                   <% tasks.filter(t => t.status === 'backlog').forEach(task => { %>
+    <div class="task-card p-3 priority-<%= task.priority %> draggable" draggable="true" id="task<%= task.id %>" ondragstart="drag(event)">
+        <div class="flex justify-between items-start mb-1">
+            <h4 class="font-medium text-sm"><%= task.name %></h4>
+        </div>
+        <div class="flex justify-between items-center text-xs text-gray-400">
+            <span>#TASK-<%= task.id %></span>
+            <% if (task.endDate) { %>
+    <span>Срок: <%= new Date(task.endDate).toLocaleDateString('ru-RU') %></span>
+<% } else { %>
+    <span>Срок: —</span>
+<% } %>
+        </div>
+        <div class="mt-2 flex justify-between items-center">
+            <div class="flex -space-x-2">
+                <% task.executors.forEach(executor => { %>
+                    <img class="w-6 h-6 rounded-full border-2 border-[#3A3F58]" src="/images/default-user.png" alt="<%= executor %>">
+                <% }) %>
+            </div>
+            <span class="text-xs bg-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-500 text-white px-2 py-1 rounded">
+                <%= task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий' %>
+            </span>
+        </div>
+    </div>
+<% }) %>
+
+                    <!-- Planned Column -->
+                   <!-- Planned Column -->
+<div class="kanban-column p-4 w-full md:w-1/5" id="planned-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold flex items-center">
+            <span class="bg-purple-500 w-4 h-4 rounded-full mr-2"></span>
+            Запланировано
+        </h3>
+        <span class="task-counter"><%= tasks.filter(t => t.status === 'Запланировано').length %></span>
+    </div>
+
+    <div class="space-y-3">
+        <% tasks.filter(t => t.status === 'Запланировано').forEach(task => { %>
+            <div class="task-card p-3 priority-<%= task.priority %> draggable" draggable="true" id="task<%= task.id %>" ondragstart="drag(event)">
+                <div class="flex justify-between items-start mb-1">
+                    <h4 class="font-medium text-sm"><%= task.name %></h4>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-400">
+                    <span>#TASK-<%= task.id %></span>
+                    <% if (task.endDate) { %>
+                        <span>Срок: <%= new Date(task.endDate).toLocaleDateString('ru-RU') %></span>
+                    <% } else { %>
+                        <span>Срок: —</span>
+                    <% } %>
+                </div>
+                <div class="mt-2 flex justify-between items-center">
+                    <div class="flex -space-x-2">
+                        <% (task.executors || []).forEach(executor => { %>
+                            <img class="w-6 h-6 rounded-full border-2 border-[#3A3F58]" src="/images/default-user.png" alt="<%= executor %>">
+                        <% }) %>
+                    </div>
+                    <span class="text-xs bg-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-500 text-white px-2 py-1 rounded">
+                        <%= task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий' %>
+                    </span>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+
+
+
+                    <!-- In Progress Column -->
+<div class="kanban-column p-4 w-full md:w-1/5" id="progress-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold flex items-center">
+            <span class="bg-yellow-500 w-4 h-4 rounded-full mr-2"></span>
+            В процессе
+        </h3>
+        <span class="task-counter"><%= tasks.filter(t => t.status === 'В процессе').length %></span>
+    </div>
+    <div class="space-y-3">
+        <% tasks.filter(t => t.status === 'В процессе').forEach(task => { %>
+            <div class="task-card p-3 priority-<%= task.priority %> draggable" draggable="true" id="task<%= task.id %>" ondragstart="drag(event)">
+                <div class="flex justify-between items-start mb-1">
+                    <h4 class="font-medium text-sm"><%= task.name %></h4>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-400">
+                    <span>#TASK-<%= task.id %></span>
+                   <% if (task.endDate) { %>
+    <span>Срок: <%= new Date(task.endDate).toLocaleDateString('ru-RU') %></span>
+<% } else { %>
+    <span>Срок: —</span>
+<% } %>
+                </div>
+                <div class="mt-2 flex justify-between items-center">
+                    <div class="flex -space-x-2">
+                        <% (task.executors || []).forEach(executor => { %>
+                            <img class="w-6 h-6 rounded-full border-2 border-[#3A3F58]" src="/images/default-user.png" alt="<%= executor %>">
+                        <% }) %>
+                    </div>
+                    <span class="text-xs bg-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-500 text-white px-2 py-1 rounded">
+                        <%= task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий' %>
+                    </span>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+                    <!-- Review Column -->
+                    <div class="kanban-column p-4 w-full md:w-1/5" id="review-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold flex items-center">
+            <span class="bg-purple-500 w-4 h-4 rounded-full mr-2"></span>
+            На проверке
+        </h3>
+        <span class="task-counter"><%= tasks.filter(t => t.status === 'На проверке').length %></span>
+    </div>
+    <div class="space-y-3">
+        <% tasks.filter(t => t.status === 'На проверке').forEach(task => { %>
+            <div class="task-card p-3 priority-<%= task.priority %> draggable" draggable="true" id="task<%= task.id %>" ondragstart="drag(event)">
+                <div class="flex justify-between items-start mb-1">
+                    <h4 class="font-medium text-sm"><%= task.name %></h4>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-400">
+                    <span>#TASK-<%= task.id %></span>
+                   <% if (task.endDate) { %>
+    <span>Срок: <%= new Date(task.endDate).toLocaleDateString('ru-RU') %></span>
+<% } else { %>
+    <span>Срок: —</span>
+<% } %>
+                </div>
+                <div class="mt-2 flex justify-between items-center">
+                    <div class="flex -space-x-2">
+                        <% (task.executors || []).forEach(executor => { %>
+                            <img class="w-6 h-6 rounded-full border-2 border-[#3A3F58]" src="/images/default-user.png" alt="<%= executor %>">
+                        <% }) %>
+                    </div>
+                    <span class="text-xs bg-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-500 text-white px-2 py-1 rounded">
+                        <%= task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий' %>
+                    </span>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+                   <div class="kanban-column p-4 w-full md:w-1/5" id="completed-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold flex items-center">
+            <span class="bg-green-500 w-4 h-4 rounded-full mr-2"></span>
+            Завершено
+        </h3>
+        <span class="task-counter"><%= tasks.filter(t => t.status === 'completed').length %></span>
+    </div>
+    <div class="space-y-3">
+        <% tasks.filter(t => t.status === 'completed').forEach(task => { %>
+            <div class="task-card p-3 priority-<%= task.priority %> draggable" draggable="true" id="task<%= task.id %>" ondragstart="drag(event)">
+                <div class="flex justify-between items-start mb-1">
+                    <h4 class="font-medium text-sm"><%= task.name %></h4>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-400">
+                    <span>#TASK-<%= task.id %></span>
+                    <% if (task.completionDate) { %>
+    <span>Завершено: <%= new Date(task.completionDate).toLocaleDateString('ru-RU') %></span>
+<% } else { %>
+    <span>Завершено: —</span>
+<% } %>
+                </div>
+                <div class="mt-2 flex justify-between items-center">
+                    <div class="flex -space-x-2">
+                        <% (task.executors || []).forEach(executor => { %>
+                            <img class="w-6 h-6 rounded-full border-2 border-[#3A3F58]" src="/images/default-user.png" alt="<%= executor %>">
+                        <% }) %>
+                    </div>
+                    <span class="text-xs bg-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-500 text-white px-2 py-1 rounded">
+                        <%= task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий' %>
+                    </span>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+</div>
+</div>
+
+
+
+
+    <!-- Add Board Modal -->
+    <div id="addBoardModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#4A4F6A] rounded-lg p-6 w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Создать новую доску</h3>
+                <button onclick="closeAddBoardModal()" class="text-gray-300 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label for="boardName" class="block text-sm font-medium mb-1">Название доски</label>
+                <input type="text" id="boardName" class="w-full bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+            <div class="mb-4">
+                <label for="boardTemplate" class="block text-sm font-medium mb-1">Шаблон</label>
+                <select id="boardTemplate" class="w-full bg-[#3A3F58] border border-[#6F637E] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="kanban">Канбан (Запланировано, В процессе, Завершено)</option>
+                    <option value="simple">Простая (Сделать, В работе, Сделано)</option>
+                    <option value="custom">Настроить вручную</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeAddBoardModal()" class="px-4 py-2 bg-[#4A4F6A] border border-[#6F637E] rounded-lg hover:bg-[#3A3F58]">
+                    Отмена
+                </button>
+                <button onclick="createNewBoard()" class="px-4 py-2 bg-[#735B92] rounded-lg hover:bg-[#5f4a78]">
+                    Создать
+                </button>
+            </div>
+        </div>
+    </div>
+  
+
+
+    <!-- Invite Modal -->
+    <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white text-black rounded-lg p-6 w-80 relative">
+            <button onclick="closeInviteModal()" class="absolute top-2 right-2 text-gray-600 hover:text-black">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-xl font-semibold mb-4">Пригласить пользователя</h3>
+            <input type="email" id="inviteEmail" placeholder="Введите email" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            <button onclick="sendInvite()" class="w-full bg-[#735B92] text-white p-2 rounded hover:bg-[#5f4a78]">
+                Отправить приглашение
+            </button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Mobile sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function () {
+            document.querySelector('.sidebar').classList.toggle('open');
+        });
+
+        // Drag and Drop functions
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.target.classList.add('dragging');
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            
+            // Remove from previous position
+            draggedElement.parentNode.removeChild(draggedElement);
+            
+            // Add to new position
+            ev.target.appendChild(draggedElement);
+            draggedElement.classList.remove('dragging');
+            
+            // Here you would typically make an AJAX call to update the task status in your database
+            console.log(`Task ${data} moved to ${ev.target.id}`);
+        }
+
+        // Filter functions
+        function applyFilters() {
+    const user = document.getElementById('userFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const dateFrom = document.getElementById('dateFromFilter').value;
+    const dateTo = document.getElementById('dateToFilter').value;
+    const project = document.getElementById('projectFilter').value;
+    const portfolio = document.getElementById('portfolioFilter').value;
+    const priority = document.getElementById('priorityFilter').value;
+    const tag = document.getElementById('tagFilter').value;
+
+    const params = new URLSearchParams();
+
+    if (user) params.append('user', user);
+    if (status) params.append('status', status);
+    if (dateFrom) params.append('dateFrom', dateFrom);
+    if (dateTo) params.append('dateTo', dateTo);
+    if (project) params.append('project', project);
+    if (priority) params.append('priority', priority);
+    if (tag) params.append('tag', tag);
+
+    window.location.href = `/boards?${params.toString()}`;
+}
+
+        function resetFilters() {
+    window.location.href = '/boards';
+}
+
+        // Board functions
+        function openAddBoardModal() {
+            document.getElementById('addBoardModal').classList.remove('hidden');
+        }
+
+        function closeAddBoardModal() {
+            document.getElementById('addBoardModal').classList.add('hidden');
+        }
+
+        function createNewBoard() {
+            const name = document.getElementById('boardName').value;
+            const template = document.getElementById('boardTemplate').value;
+            
+            if (!name) {
+                alert('Пожалуйста, введите название доски');
+                return;
+            }
+            
+            // Here you would typically make an AJAX call to create a new board
+            console.log('Creating new board:', { name, template });
+            
+            // For demo purposes, we'll just show an alert and close the modal
+            alert(`Новая доска "${name}" создана! В реальном приложении здесь будет перенаправление на новую доску.`);
+            closeAddBoardModal();
+        }
+
+        function exportBoard() {
+            // Here you would typically implement board export functionality
+            console.log('Exporting board data');
+            alert('Экспорт доски начат! В реальном приложении здесь будет скачивание файла.');
+        }
+
+        function refreshBoard() {
+            // Here you would typically reload board data from the server
+            console.log('Refreshing board data');
+            alert('Данные доски обновлены! В реальном приложении здесь будет перезагрузка задач.');
+        }
+
+        // Invite functions
+        function openInviteModal() {
+            document.getElementById('inviteModal').classList.remove('hidden');
+        }
+
+        function closeInviteModal() {
+            document.getElementById('inviteModal').classList.add('hidden');
+        }
+
+         function changeSection(section) {
+            if (section === 'home') {
+                window.location.href = '/';
+                return;
+            }
+
+            currentSection = section;
+            document.getElementById('breadcrumb').innerHTML = `
+                <a href="/" class="breadcrumb-link">Моя страница</a> / ${getSectionName(section)}
+            `;
+
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+
+        async function sendInvite() {
+            const email = document.getElementById('inviteEmail').value.trim();
+            if (!email) {
+                alert('Введите email');
+                return;
+            }
+
+            try {
+                // Here you would typically make an AJAX call to your backend
+                console.log('Sending invite to:', email);
+                
+                // For demo purposes, we'll just show an alert
+                alert(`Приглашение отправлено на ${email}! В реальном приложении здесь будет обработка ответа сервера.`);
+                document.getElementById('inviteEmail').value = '';
+                closeInviteModal();
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка при отправке приглашения');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+    const exportBtn = document.getElementById('exportBtn');
+    if (!exportBtn) {
+        console.error('Кнопка #exportBtn не найдена');
+        return;
+    }
+
+    exportBtn.addEventListener('click', async () => {
+        const kanban = document.getElementById('kanbanBoard');
+        if (!kanban) {
+            alert('Не найден элемент канбан-доски');
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(kanban, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            });
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            const imgWidth = pdf.internal.pageSize.getWidth();
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            pdf.addImage(canvas, 'PNG', 0, 0, imgWidth, imgHeight);
+            pdf.save('kanban-board.pdf');
+        } catch (err) {
+            console.error('Ошибка при экспорте:', err);
+            alert('Произошла ошибка при экспорте');
+        }
+    });
+});
+
+    </script>
+</body>
+</html>
