@@ -521,7 +521,7 @@ app.get('/user', requireAuth, async (req, res) => {
         const result = await pool.query('SELECT name, lastname, email, role FROM users WHERE email = $1', [req.session.user.email]);
 
         if (result.rows.length === 0) {
-            return res.status(404).render('404'); // или redirect('/')
+            return res.status(404).render('404'); 
         }
 
         const user = result.rows[0];
@@ -587,7 +587,6 @@ app.post('/user/delete', requireAuth, async (req, res) => {
                 return res.status(500).json({ success: false, message: 'Ошибка при удалении сессии' });
             }
 
-            // Отправляем JSON-ответ
             res.json({
                 success: true,
                 redirect: '/?accountDeleted=true'
@@ -704,7 +703,7 @@ app.put('/api/portfolios/:id', requireAuth, async (req, res) => {
 
 // Удаление портфеля
 app.delete('/api/portfolios/:id', requireAuth, async (req, res) => {
-    const id = Number(req.params.id); // приведение к числу, т.к. portfolios.id — INTEGER
+    const id = Number(req.params.id); 
 
     if (isNaN(id)) {
         return res.status(400).json({ success: false, message: 'Некорректный ID' });
@@ -863,8 +862,6 @@ app.get('/boards', requireAuth, async (req, res) => {
             values.push(dateTo);
         }
 
-
-        // Если фильтр по портфелю — найдём проекты, связанные с ним
         if (portfolio) {
             const projectsOfPortfolio = await pool.query(
                 'SELECT id FROM projects WHERE portfolio_id = $1 AND user_email = $2',
@@ -912,8 +909,6 @@ app.get('/boards', requireAuth, async (req, res) => {
             timeSpent: task.time_spent
         }));
 
-
-        // Загрузить вспомогательные данные
         const projects = (await pool.query(
             'SELECT id, name FROM projects WHERE user_email = $1',
             [req.session.user.email]
@@ -961,9 +956,6 @@ app.get('/boards', requireAuth, async (req, res) => {
         res.status(500).send('Ошибка сервера');
     }
 });
-
-
-
 
 
 app.get('/ochered', requireAuth, (req, res) => {
@@ -1049,9 +1041,9 @@ app.get('/goals', requireAuth, async (req, res) => {
     const role = req.session.user.role;
 
     if (role === 'leader') {
-        res.render('celi'); // лидер → общая цель
+        res.render('celi');
     } else if (role === 'member') {
-        res.render('celi_memb'); // участник → свои цели
+        res.render('celi_memb'); 
     } else {
         res.status(403).render('403'); // роль не определена
     }
@@ -1064,7 +1056,7 @@ app.get('/api/goals', requireAuth, async (req, res) => {
             'SELECT * FROM celi WHERE user_email = $1 ORDER BY id DESC',
             [email]
         );
-        res.json(result.rows); // 💥 ВОТ ЭТО — JSON, не res.render()
+        res.json(result.rows); 
     } catch (err) {
         console.error('Ошибка при получении целей:', err);
         res.status(500).json({ error: 'Ошибка сервера' });
@@ -1263,7 +1255,7 @@ app.get('/reports', requireAuth, async (req, res) => {
                 status: task.status,
                 priority: task.priority,
                 type: task.type,
-                projectId: task.project, // 👈 исправлено с project_id на project
+                projectId: task.project, 
                 projectName: project ? project.name : 'Без проекта',
                 timeSpent: task.time_spent || 0,
                 completed: task.completed
